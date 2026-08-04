@@ -1629,10 +1629,53 @@ def result_publication(request):
             request.POST.get("semester")
         )
 
+        semester_results_exist = SemesterResult.objects.filter(
+            examination=selected_examination,
+            semester=selected_semester,
+        ).exists()
+
+        if not semester_results_exist:
+
+            messages.error(
+                request,
+                "Semester Result Processing has not been completed for the selected semester."
+            )
+
+            return redirect(
+                f"{request.path}?examination={selected_examination.id}&semester={selected_semester}"
+            )
+
+        combined_results_exist = CombinedResult.objects.filter(
+            examination=selected_examination,
+        ).exists()
+
+        if not combined_results_exist:
+
+            messages.error(
+                request,
+                "Combined Result Processing has not been completed."
+            )
+
+            return redirect(
+                f"{request.path}?examination={selected_examination.id}&semester={selected_semester}"
+            )
+
         publication, created = ResultPublication.objects.get_or_create(
             examination=selected_examination,
             semester=selected_semester,
         )
+
+# Validation 3 - Prevent duplicate publication
+        if publication.is_published:
+
+            messages.warning(
+                request,
+                "Result has already been published."
+            )
+
+            return redirect(
+                f"{request.path}?examination={selected_examination.id}&semester={selected_semester}"
+            )
 
         publication.is_published = True
 
