@@ -1,0 +1,29 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block title %}
+Assessment Window
+{% endblock %}
+
+{% block page_content %}
+
+<h2 class="mb-3">Assessment Window</h2>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <button type="submit"
+            class="btn btn-success">
+        Save
+    </button>
+
+    <a href="{% url 'assessment_window_list' %}"
+       class="btn btn-secondary">
+        Cancel
+    </a>
+
+</form>
+
+{% endblock %}

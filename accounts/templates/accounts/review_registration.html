@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Review Registration</title>
+</head>
+
+<body>
+
+<h1>National Examination Management System (NEMS)</h1>
+
+<hr>
+
+<h2>Review Semester Registration</h2>
+
+<p>
+
+<strong>Student :</strong>
+
+{{ student.student_name }}
+
+</p>
+
+<p>
+
+<strong>Programme :</strong>
+
+{{ student.programme }}
+
+</p>
+
+<p>
+
+<strong>Academic Year :</strong>
+
+{{ registration_window.academic_year }}
+
+</p>
+
+<p>
+
+<strong>Registration Cycle :</strong>
+
+{{ registration_window.registration_cycle }}
+
+</p>
+
+<p>
+
+<strong>Selected Semester :</strong>
+
+Semester {{ semester }}
+
+</p>
+
+<hr>
+
+<form
+    method="post"
+    action="{% url 'submit_registration' %}"
+>
+
+    {% csrf_token %}
+
+    <input
+        type="hidden"
+        name="semester"
+        value="{{ semester }}"
+    >
+
+    <button type="submit">
+
+        Submit Registration
+
+    </button>
+
+</form>
+
+</body>
+
+</html>

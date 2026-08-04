@@ -1,0 +1,21 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block title %}
+COE Dashboard
+{% endblock %}
+
+{% block page_content %}
+
+<h2>Controller of Examination Dashboard</h2>
+
+<hr>
+
+<p>
+Welcome <strong>{{ request.user.first_name }}</strong>
+</p>
+
+<p>
+Please select a module from the menu on the left.
+</p>
+
+{% endblock %}

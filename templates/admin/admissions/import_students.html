@@ -1,0 +1,51 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+
+<h1>Import Students</h1>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <button type="submit">Upload Excel</button>
+</form>
+
+{% if rows %}
+
+<hr>
+
+{% if errors %}
+
+<h2>Validation Errors</h2>
+
+<ul style="color:red;">
+
+{% for error in errors %}
+    <li>{{ error }}</li>
+{% endfor %}
+
+</ul>
+
+<hr>
+
+{% endif %}
+
+<h2>Excel Preview</h2>
+
+<table border="1" cellpadding="5">
+
+    {% for row in rows %}
+    <tr>
+        {% for cell in row %}
+        <td>{{ cell }}</td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+
+</table>
+
+{% endif %}
+
+{% endblock %}

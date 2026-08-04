@@ -1,0 +1,145 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+NEMS - Controller of Examinations
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="row">
+
+        <!-- Sidebar -->
+        <div class="col-md-3">
+
+            <h4>COE Portal</h4>
+
+            <hr>
+
+            <h6>Examinations</h6>
+
+            <div class="list-group">
+
+                <a href="{% url 'examination_type_list' %}"
+                   class="list-group-item list-group-item-action">
+                    Examination Types
+                </a>
+
+                <a href="{% url 'examination_list' %}"
+                   class="list-group-item list-group-item-action">
+                    Examinations
+                </a>
+
+                <a href="{% url 'examination_semester_list' %}"
+                   class="list-group-item list-group-item-action">
+                    Semester Mapping
+                </a>
+
+                <a href="{% url 'coe_pending_exam_registrations' %}"
+                   class="list-group-item list-group-item-action">
+                    Examination Registration Approval
+                </a>
+
+            </div>
+
+            <h6 class="mt-4">Assessments</h6>
+
+            <div class="list-group">
+
+                <a href="{% url 'assessment_window_list' %}"
+                   class="list-group-item list-group-item-action">
+                    Assessment Windows
+                </a>
+
+            </div>
+
+            <h6 class="mt-4">Question Papers</h6>
+
+            <div class="list-group">
+
+                <a href="/coe/question-paper-selection/"
+                   class="list-group-item list-group-item-action">
+                    Random Question Paper Selection
+                </a>
+
+            </div>
+
+            <h6 class="mt-4">Results</h6>
+
+            <div class="list-group">
+
+                <a href="{% url 'coe_marks_verification' %}"
+                   class="list-group-item list-group-item-action">
+                    Faculty Submission Verification
+                </a>
+
+                <a href="{% url 'result_processing' %}"
+                   class="list-group-item list-group-item-action">
+                    Result Processing
+                </a>
+
+                <a href="{% url 'semester_result_processing' %}"
+                   class="list-group-item list-group-item-action">
+                    Semester Result Processing
+                </a>
+
+                <a href="{% url 'combined_result_processing' %}"
+                   class="list-group-item list-group-item-action">
+                    Combined Result Processing
+                </a>
+
+                <a href="#"
+                   class="list-group-item list-group-item-action">
+                    Rechecking
+                </a>
+
+            <li class="nav-item">
+
+                <a class="nav-link"
+                   href="{% url 'result_publication' %}">
+
+                    Result Publication
+
+                </a>
+
+            </li>
+
+                <a href="{% url 'historical_result_import' %}"
+                   class="list-group-item list-group-item-action">
+                    Historical Result Import
+                </a>
+
+            </div>
+
+            <hr>
+
+            <div class="d-grid gap-2">
+
+                <a href="{% url 'coe_dashboard' %}"
+                   class="btn btn-outline-primary">
+                    🏠 Dashboard
+                </a>
+
+                <a href="{% url 'logout' %}"
+                   class="btn btn-outline-danger">
+                    🚪 Logout
+                </a>
+
+            </div>
+
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+
+            {% block page_content %}
+            {% endblock %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

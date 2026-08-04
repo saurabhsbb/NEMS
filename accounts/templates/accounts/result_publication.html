@@ -1,0 +1,181 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+
+Result Publication
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h3>
+
+        Result Publication
+
+    </h3>
+
+    <hr>
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        <div class="row">
+
+            <div class="col-md-4">
+
+                <label>
+
+                    Examination
+
+                </label>
+
+                <select
+                    name="examination"
+                    class="form-control"
+                    required>
+
+                    <option value="">
+
+                        Select Examination
+
+                    </option>
+
+                    {% for examination in examinations %}
+
+                    <option
+                        value="{{ examination.id }}"
+                        {% if selected_examination and examination.id == selected_examination.id %}
+                        selected
+                        {% endif %}>
+
+                        {{ examination }}
+
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+            <div class="col-md-3">
+
+                <label>
+
+                    Semester
+
+                </label>
+
+                <select
+                    name="semester"
+                    class="form-control"
+                    required>
+
+                    <option value="">Select Semester</option>
+
+                    {% for i in "123456" %}
+
+                    <option
+                        value="{{ i }}"
+                        {% if selected_semester == i|add:"0" %}
+                        selected
+                        {% endif %}>
+
+                        Semester {{ i }}
+
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+            <div class="col-md-3 d-flex align-items-end">
+
+                <button
+                    type="submit"
+                    class="btn btn-success">
+
+                    Publish Result
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </form>
+
+    {% if publication %}
+
+    <hr>
+
+    <table class="table table-bordered">
+
+        <tr>
+
+            <th width="30%">
+
+                Published
+
+            </th>
+
+            <td>
+
+                {% if publication.is_published %}
+
+                    Yes
+
+                {% else %}
+
+                    No
+
+                {% endif %}
+
+            </td>
+
+        </tr>
+
+        <tr>
+
+            <th>
+
+                Published By
+
+            </th>
+
+            <td>
+
+                {{ publication.published_by }}
+
+            </td>
+
+        </tr>
+
+        <tr>
+
+            <th>
+
+                Published On
+
+            </th>
+
+            <td>
+
+                {{ publication.published_on }}
+
+            </td>
+
+        </tr>
+
+    </table>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

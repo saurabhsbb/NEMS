@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Enter Marks</title>
+</head>
+
+<body>
+
+<h1>National Examination Management System (NEMS)</h1>
+
+<hr>
+
+{% if messages %}
+
+    {% for message in messages %}
+
+        <div
+            style="
+                padding:10px;
+                margin-bottom:10px;
+                border:1px solid;
+
+                {% if message.tags == 'success' %}
+                    background:#d4edda;
+                    border-color:#28a745;
+                {% else %}
+                    background:#f8d7da;
+                    border-color:#dc3545;
+                {% endif %}
+            "
+        >
+
+            {{ message }}
+
+        </div>
+
+    {% endfor %}
+
+{% endif %}
+
+<h2>Marks Entry</h2>
+
+<p>
+    <strong>Subject:</strong>
+    {{ assignment.subject.subject_name }}
+</p>
+
+<p>
+    <strong>Semester:</strong>
+    {{ assignment.subject.semester }}
+</p>
+
+<hr>
+
+<form method="get">
+
+    <label>
+
+        <strong>Select Examination</strong>
+
+    </label>
+
+    <br><br>
+
+    <select name="examination">
+
+        <option value="">
+            -- Select Examination --
+        </option>
+
+        {% for exam in examinations %}
+
+        <option value="{{ exam.id }}"
+        {% if selected_examination and selected_examination.id == exam.id %}
+            selected
+        {% endif %}
+        >
+
+            {{ exam.examination_name }}
+
+        </option>
+
+        {% endfor %}
+
+    </select>
+
+    <button type="submit">
+        Load Students
+    </button>
+
+</form>
+
+<hr>
+
+{% if selected_examination %}
+
+    {% if active_window %}
+
+    <div style="padding:10px; background:#d4edda; border:1px solid #28a745; margin-bottom:15px;">
+
+        <strong>Assessment Window Open:</strong>
+
+        {{ active_window.get_assessment_type_display }}
+
+    </div>
+
+    {% else %}
+
+    <div style="padding:10px; background:#f8d7da; border:1px solid #dc3545; margin-bottom:15px;">
+
+        <strong>No Assessment Window is currently open for this examination.</strong>
+
+    </div>
+
+    {% endif %}
+
+{% endif %}
+
+{% if selected_examination %}
+
+<h3>Students</h3>
+
+<form method="post">
+
+{% csrf_token %}
+
+<table border="1" cellpadding="8">
+
+<tr>
+
+    <th>Roll No.</th>
+
+    <th>Student Name</th>
+
+    <th>CT</th>
+
+    <th>A&A</th>
+
+    <th>Theory Ext</th>
+
+    <th>Practical Int</th>
+
+    <th>Practical Ext</th>
+
+    <th>Total</th>
+
+    <th>Grade</th>
+
+    <th>Status</th>
+
+</tr>
+
+{% for registration in registrations %}
+
+<tr>
+
+    <td>
+        {{ registration.student.roll_number }}
+    </td>
+
+    <td>
+        {{ registration.student }}
+    </td>
+
+    
+
+    <td>
+        {{ registration.theory_external_marks|default_if_none:"" }}
+    </td>
+
+    <td>
+        {{ registration.practical_internal_marks|default_if_none:"" }}
+    </td>
+
+    <td>
+        {{ registration.practical_external_marks|default_if_none:"" }}
+    </td>
+
+    <td>
+        {{ registration.total_marks|default_if_none:"" }}
+    </td>
+
+    <td>
+        {{ registration.grade|default_if_none:"" }}
+    </td>
+
+    <td>
+        {{ registration.result_status|default_if_none:"" }}
+    </td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+    <td colspan="3">
+        No approved students found for this semester.
+    </td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+<br>
+
+{% if active_window %}
+
+<button type="submit">
+    Save Marks
+</button>
+
+{% endif %}
+
+</form>
+
+{% endif %}
+
+<hr>
+
+<p>
+    <a href="{% url 'faculty_dashboard' %}">
+        Back to Faculty Dashboard
+    </a>
+</p>
+
+
+</body>
+
+</html>

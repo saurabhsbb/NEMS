@@ -1,0 +1,49 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+NEMS - Controller of Examinations
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="row">
+
+        <!-- Sidebar -->
+        <div class="col-md-3">
+
+            <h4>COE Portal</h4>
+
+            <hr>
+
+            <h6>Dashboard</h6>
+
+            <h6>Master Data</h6>
+
+            <ul>
+                <li>Departments</li>
+                <li>Programmes</li>
+                <li>Academic Years</li>
+                <li>Registration Cycles</li>
+                <li>Curriculum</li>
+                <li>Subjects</li>
+            </ul>
+
+            
+
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+
+            {% block page_content %}
+            {% endblock %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>DEPM Dashboard</title>
+</head>
+
+<body>
+
+<h1>National Examination Management System (NEMS)</h1>
+
+<hr>
+
+<h2>DEPM Dashboard</h2>
+
+<p>
+Welcome
+<strong>{{ request.user.first_name }}</strong>
+</p>
+
+<hr>
+
+<h3>Department Examination Services</h3>
+
+<ul>
+
+    <li>
+        <a href="{% url 'depm_pending_registrations' %}">
+            Approve Semester Registrations
+        </a>
+    </li>
+
+    <li>
+        <a href="/depm/faculty-subject-assignment/">
+            Faculty Subject Assignment
+        </a>
+    </li>
+
+    <li>
+        <a href="/login/">
+            Logout
+        </a>
+    </li>
+
+</ul>
+
+</body>
+
+</html>

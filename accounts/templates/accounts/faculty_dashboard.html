@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Faculty Dashboard</title>
+</head>
+
+<body>
+
+<h1>National Examination Management System (NEMS)</h1>
+
+<hr>
+
+<h2>Faculty Dashboard</h2>
+
+<p>
+Welcome <strong>{{ request.user.first_name }}</strong>
+</p>
+
+<hr>
+
+<h3>My Subjects</h3>
+
+<ul>
+
+    {% for assignment in assignments %}
+
+        <li>     
+
+            {{ assignment.subject.subject_name }}
+
+            <a href="/faculty/upload-question-papers/{{ assignment.id }}/">
+
+                Upload Question Papers
+
+            </a>
+
+            &nbsp; | &nbsp;
+
+            <a href="/faculty/enter-marks/{{ assignment.id }}/">
+
+                Enter Marks
+
+            </a>
+
+        </li>
+
+    {% empty %}
+
+        <li>
+
+            No subjects assigned.
+
+        </li>
+
+    {% endfor %}
+
+</ul>
+
+<hr>
+
+<h3>Faculty Services</h3>
+
+<ul>
+
+    <li>Upload Question Papers</li>
+
+    <li>Enter Internal Marks</li>
+
+    <li>Enter End Semester Marks</li>
+
+    <li>Logout</li>
+
+</ul>
+
+</body>
+
+</html>

@@ -1,0 +1,79 @@
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import LoginView
+from django.shortcuts import redirect, render
+from admissions.models import Student
+from registration.models import SemesterRegistrationWindow
+
+class LoginPageView(LoginView):
+
+    template_name = "accounts/login.html"
+
+    def get_success_url(self):
+
+        user = self.request.user
+
+        if user.role:
+
+            if user.role.role_code == "STUDENT":
+                return "/student/"
+
+            if user.role.role_code == "ADMIN":
+                return "/admin/"
+
+            if user.role.role_code == "DEPM":
+                return "/depm/"
+
+            if user.role.role_code == "FACULTY":
+                return "/faculty/"
+
+        return "/login/"
+
+
+@login_required
+def student_dashboard(request):
+
+    return render(
+        request,
+        "accounts/student_dashboard.html",
+    )
+
+@login_required
+def semester_registration(request):
+
+    student = Student.objects.get(
+        user=request.user
+    )
+
+    registration_window = (
+        SemesterRegistrationWindow.objects.filter(
+            programme=student.programme,
+            registration_status="OPEN",
+        ).first()
+    )
+
+    semester_choices = []
+
+    if registration_window:
+
+        if (
+            registration_window.registration_cycle
+            .cycle_code
+            == "ODD"
+        ):
+
+            semester_choices = [1, 3, 5]
+
+        else:
+
+            semester_choices = [2, 4, 6]
+
+    return render(
+        request,
+        "accounts/semester_registration.html",
+        {
+            "student": student,
+            "registration_window": registration_window,
+            "semester_choices": semester_choices,
+        },
+    )
+

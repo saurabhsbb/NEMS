@@ -1,0 +1,85 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block title %}
+Assessment Windows
+{% endblock %}
+
+{% block page_content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+    <h2>Assessment Windows</h2>
+
+    <a href="{% url 'assessment_window_create' %}"
+       class="btn btn-primary">
+        + Add Assessment Window
+    </a>
+
+</div>
+
+<table class="table table-bordered table-hover">
+
+    <thead class="table-light">
+
+        <tr>
+            <th>Sr.</th>
+            <th>Examination</th>
+            <th>Assessment Type</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+    {% for window in windows %}
+
+        <tr>
+
+            <td>{{ forloop.counter }}</td>
+
+            <td>{{ window.examination.examination_name }}</td>
+
+            <td>{{ window.get_assessment_type_display }}</td>
+
+            <td>{{ window.start_date }}</td>
+
+            <td>{{ window.end_date }}</td>
+    
+            <td>{{ window.current_status }}</td>
+
+            <td>
+
+                <a href="{% url 'assessment_window_update' window.id %}"
+                   class="btn btn-sm btn-warning">
+                    Edit
+                </a>
+
+                <a href="{% url 'assessment_window_delete' window.id %}"
+                   class="btn btn-sm btn-danger">
+                    Delete
+                </a>
+
+            </td>
+        </tr>
+
+    {% empty %}
+
+        <tr>
+
+            <td colspan="7" class="text-center">
+                No Assessment Windows found.
+            </td>
+
+        </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% endblock %}

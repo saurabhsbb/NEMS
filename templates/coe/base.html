@@ -1,0 +1,67 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+NEMS - Controller of Examinations
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="row">
+
+        <!-- Sidebar -->
+        <div class="col-md-3">
+
+            <h4>COE Portal</h4>
+
+            <hr>
+
+            <h6>Dashboard</h6>
+
+            <h6>Master Data</h6>
+
+            <ul>
+                <li>Departments</li>
+                <li>Programmes</li>
+                <li>Academic Years</li>
+                <li>Registration Cycles</li>
+                <li>Curriculum</li>
+                <li>Subjects</li>
+            </ul>
+
+            <h6 class="mt-4">Examinations</h6>
+
+	    <div class="list-group">
+
+    		<a href="{% url 'examination_type_list' %}"
+                   class="list-group-item list-group-item-action">
+        	    Examination Types
+    		</a>
+
+    		<a href="{% url 'examination_list' %}"
+       		   class="list-group-item list-group-item-action">
+                    Examinations
+    		</a>
+
+    		<a href="{% url 'examination_semester_list' %}"
+   		   class="list-group-item list-group-item-action">
+    		    Semester Mapping
+		</a>
+	    </div>
+
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+
+            {% block page_content %}
+            {% endblock %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

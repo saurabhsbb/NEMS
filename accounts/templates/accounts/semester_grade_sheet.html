@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <title>Semester Grade Sheet</title>
+
+    <style>
+
+        body{
+
+            font-family:"Times New Roman", serif;
+
+            font-size:14px;
+
+            margin:40px;
+
+            color:#000;
+
+        }
+
+        .header{
+
+            text-align:center;
+
+            margin-bottom:20px;
+
+        }
+
+        .header h2{
+
+            margin:0;
+
+            font-size:24px;
+
+        }
+
+        .header h3{
+
+            margin:5px 0;
+
+            font-size:18px;
+
+        }
+
+        .header h4{
+
+            margin-top:15px;
+
+            font-size:24px;
+
+            text-decoration:underline;
+
+        }
+
+        hr{
+
+            margin:20px 0;
+
+        }
+
+        .student-info{
+
+            width:100%;
+
+            border-collapse:collapse;
+
+            margin-bottom:20px;
+
+        }
+
+        .student-info td{
+
+            border:none;
+
+            padding:6px 4px;
+
+            vertical-align:top;
+
+        }
+
+        .result-table{
+
+            width:100%;
+
+            border-collapse:collapse;
+
+            margin-top:10px;
+
+        }
+
+        .result-table th{
+
+            border:1px solid #000;
+
+            padding:8px;
+
+            text-align:center;
+
+        }
+
+        .result-table td{
+
+            border:1px solid #000;
+
+            padding:7px;
+
+        }
+
+        .summary{
+
+            width:38%;
+
+            margin-top:25px;
+
+            margin-left:auto;
+
+            border-collapse:collapse;
+
+        }
+
+        .summary td{
+
+            border:1px solid #000;
+
+            padding:7px;
+
+        }
+
+        .signature{
+
+            margin-top:80px;
+
+            text-align:right;
+
+            font-weight:bold;
+
+        }
+
+        .no-print{
+
+            margin-top:25px;
+
+        }
+
+        @media print{
+
+            .no-print{
+
+                display:none;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="header">
+
+    <h2>
+
+        NATIONAL INSTITUTE OF ELECTRONICS AND INFORMATION TECHNOLOGY
+
+    </h2>
+
+    <h3>
+
+        Chhatrapati Sambhajinagar
+
+    </h3>
+
+    <h4>
+
+        SEMESTER GRADE SHEET
+
+    </h4>
+
+</div>
+
+<hr>
+
+<table class="student-info">
+
+    <tr>
+
+        <td width="50%">
+
+            <strong>Roll Number :</strong>
+
+            {{ student.roll_number }}
+
+        </td>
+
+        <td>
+
+            <strong>Student Name :</strong>
+
+            {{ student.student_name }}
+
+        </td>
+
+    </tr>
+
+    <tr>
+
+        <td>
+
+            <strong>Programme :</strong>
+
+            {{ student.programme }}
+
+        </td>
+
+        <td>
+
+            <strong>Semester :</strong>
+
+            {{ semester }}
+
+        </td>
+
+    </tr>
+
+    <tr>
+
+        <td>
+
+            <strong>Examination :</strong>
+
+            {{ examination }}
+
+        </td>
+
+        <td>
+
+            <strong>Date of Issue :</strong>
+
+            {% now "d M Y" %}
+
+        </td>
+
+    </tr>
+
+</table>
+
+<table class="result-table">
+
+    <thead>
+
+        <tr>
+
+            <th>Sr.</th>
+
+            <th>Subject Code</th>
+
+            <th>Subject Name</th>
+
+            <th>Credits</th>
+
+            <th>Grade</th>
+
+            <th>Grade Point</th>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+    {% for result in results %}
+
+        <tr>
+
+            <td>
+
+                {{ forloop.counter }}
+
+            </td>
+
+            <td>
+
+                {{ result.subject.subject_code }}
+
+            </td>
+
+            <td>
+
+                {{ result.subject.subject_name }}
+
+            </td>
+
+            <td>
+
+                {{ result.subject.credits }}
+
+            </td>
+
+            <td>
+
+                {% if result.grade == "FF" %}
+
+                    <strong>{{ result.grade }}</strong>
+
+                {% else %}
+
+                    {{ result.grade }}
+
+                {% endif %}
+
+            </td>
+
+            <td>
+
+                {{ result.grade_point }}
+
+            </td>
+
+        </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
+<table class="summary">
+
+    <tr>
+
+        <td>
+
+            Registered Credits
+
+        </td>
+
+        <td>
+
+            {{ semester_result.registered_credits }}
+
+        </td>
+
+    </tr>
+
+    <tr>
+
+        <td>
+
+            Earned Credits
+
+        </td>
+
+        <td>
+
+            {{ semester_result.earned_credits }}
+
+        </td>
+
+    </tr>
+
+    <tr>
+
+        <td>
+
+            SGPA
+
+        </td>
+
+        <td>
+
+            {{ semester_result.sgpa }}
+
+        </td>
+
+    </tr>
+
+    <tr>
+
+        <td>
+
+            Semester Result
+
+        </td>
+
+        <td>
+
+            <strong>
+
+                {{ semester_result.result_status }}
+
+            </strong>
+
+        </td>
+
+    </tr>
+
+</table>
+
+<div class="no-print">
+
+    <button
+        type="button"
+        onclick="window.print()">
+
+        Print Grade Sheet
+
+    </button>
+
+</div>
+
+<div class="signature">
+
+    Controller of Examinations
+
+</div>
+
+</body>
+
+</html>

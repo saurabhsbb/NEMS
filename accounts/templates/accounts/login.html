@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>NEMS Login</title>
+</head>
+
+<body>
+
+    <h1>National Examination Management System (NEMS)</h1>
+
+    <h2>Login</h2>
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button type="submit">
+            Login
+        </button>
+
+    </form>
+
+</body>
+
+</html>

@@ -1,0 +1,208 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block title %}
+Historical Result Import
+{% endblock %}
+
+{% block page_content %}
+
+<h2>Historical Result Import</h2>
+
+<hr>
+
+<form method="post" enctype="multipart/form-data">
+
+    {% csrf_token %}
+
+    <div class="mb-3">
+
+        <label class="form-label">
+            Examination
+        </label>
+
+        <select
+            name="examination"
+            class="form-select"
+            required>
+
+            <option value="">
+                Select Examination
+            </option>
+
+            {% for examination in examinations %}
+
+                <option value="{{ examination.id }}">
+                    {{ examination }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+    <div class="mb-3">
+
+        <label class="form-label">
+            Excel File
+        </label>
+
+        <input
+            type="file"
+            name="excel_file"
+            class="form-control"
+            accept=".xlsx"
+            required>
+
+    </div>
+
+    <button
+        type="submit"
+        class="btn btn-primary">
+
+        Preview
+
+    </button>
+
+</form>
+
+{% if excel_data %}
+
+<hr>
+
+{% if invalid_subjects %}
+
+<div class="alert alert-danger">
+
+    <strong>Invalid Subject Codes:</strong>
+
+    <ul>
+
+        {% for code in invalid_subjects %}
+
+            <li>{{ code }}</li>
+
+        {% endfor %}
+
+    </ul>
+
+</div>
+
+{% elif excel_data %}
+
+<div class="alert alert-success">
+
+    ✓ All subject codes are valid.
+
+</div>
+
+{% endif %}
+
+{% if invalid_roll_numbers %}
+
+<div class="alert alert-danger">
+
+    <strong>Invalid Roll Numbers:</strong>
+
+    <ul>
+
+        {% for roll in invalid_roll_numbers %}
+
+            <li>{{ roll }}</li>
+
+        {% endfor %}
+
+    </ul>
+
+</div>
+
+{% elif excel_data %}
+
+<div class="alert alert-success">
+
+    ✓ All roll numbers are valid.
+
+</div>
+
+{% endif %}
+
+{% if invalid_grades %}
+
+<div class="alert alert-danger">
+
+    <strong>Invalid Grades:</strong>
+
+    <ul>
+
+    {% for item in invalid_grades %}
+
+        <li>
+            Row {{ item.row }}, Column {{ item.column }} :
+            {{ item.grade }}
+        </li>
+
+    {% endfor %}
+
+    </ul>
+
+</div>
+
+{% elif excel_data %}
+
+<div class="alert alert-success">
+
+    ✓ All grades are valid.
+
+</div>
+
+{% endif %}
+
+<h4>Excel Preview</h4>
+
+<table class="table table-bordered table-sm">
+
+    {% for row in excel_data %}
+
+        <tr>
+
+            {% for cell in row %}
+
+                {% if forloop.parentloop.first %}
+                    <th>{{ cell }}</th>
+                {% else %}
+                    <td>{{ cell }}</td>
+                {% endif %}
+
+            {% endfor %}
+
+        </tr>
+
+    {% endfor %}
+
+</table>
+
+{% if excel_data and not invalid_subjects and not invalid_roll_numbers and not invalid_grades %}
+
+<hr>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <button
+        type="submit"
+        name="action"
+        value="import"
+        class="btn btn-success">
+
+        Import Results
+
+    </button>
+
+</form>
+
+{% endif %}
+
+{% endif %}
+
+{% endblock %}

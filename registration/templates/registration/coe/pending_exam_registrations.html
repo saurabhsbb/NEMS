@@ -1,0 +1,67 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block title %}
+Pending Examination Registrations
+{% endblock %}
+
+{% block page_content %}
+
+<h2>Pending Examination Registrations</h2>
+
+<hr>
+
+{% if registrations %}
+
+<table class="table table-bordered">
+
+    <thead>
+
+        <tr>
+            <th>Roll Number</th>
+            <th>Student Name</th>
+            <th>Examination</th>
+            <th>Semester</th>
+            <th>Status</th>
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+    {% for registration in registrations %}
+
+        <tr>
+
+            <td>{{ registration.student.roll_number }}</td>
+
+            <td>
+
+                <a href="{% url 'coe_review_exam_registration' registration.id %}">
+
+                    {{ registration.student.student_name }}
+
+                </a>
+
+            </td>
+
+            <td>{{ registration.examination.examination_name }}</td>
+
+            <td>{{ registration.semester_registration.semester }}</td>
+
+            <td>{{ registration.get_registration_status_display }}</td>
+
+        </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% else %}
+
+<p>No pending examination registrations.</p>
+
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Random Question Paper Selection</title>
+
+</head>
+
+<body>
+
+<h1>National Examination Management System (NEMS)</h1>
+
+<hr>
+
+<h2>Random Question Paper Selection</h2>
+
+<table border="1" cellpadding="8">
+
+<tr>
+
+<th>Subject</th>
+
+<th>Faculty</th>
+
+<th>Status</th>
+
+<th>Action</th>
+
+</tr>
+
+{% for assignment in assignments %}
+
+<tr>
+
+<td>
+
+{{ assignment.subject.subject_name }}
+
+</td>
+
+<td>
+
+{{ assignment.faculty }}
+
+</td>
+
+<td>
+
+Ready
+
+</td>
+
+<td>
+
+{% if assignment.selected_question_paper_set %}
+
+    Question Paper Generated Successfully
+
+    <br><br>
+
+    {% for paper in question_papers %}
+
+        {% if paper.faculty_subject_assignment.id == assignment.id %}
+
+            {% if paper.question_paper_set == assignment.selected_question_paper_set %}
+
+                <a href="{{ paper.question_paper_file.url }}">
+
+                    Download Selected Question Paper
+
+                </a>
+
+                <br><br>
+
+            {% endif %}
+
+        {% endif %}
+
+    {% endfor %}
+
+    {% if assignment.question_paper_evaluation_minutes %}
+
+        <a href="{{ assignment.question_paper_evaluation_minutes.url }}">
+
+            Download Question Paper Evaluation Minutes
+
+        </a>
+
+    {% endif %}
+
+{% else %}
+
+    <a href="/coe/generate-question-paper/{{ assignment.id }}/">
+
+        Generate Random Question Paper
+
+    </a>
+
+{% endif %}
+
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+
+<td colspan="4">
+
+No subjects are ready.
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+<hr>
+
+<a href="/coe/">
+
+Back to Dashboard
+
+</a>
+
+</body>
+
+</html>

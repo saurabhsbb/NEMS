@@ -1,0 +1,230 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+DEPM Semester Registration Review
+{% endblock %}
+
+{% block content %}
+
+<h2>DEPM Semester Registration Review</h2>
+
+<hr>
+
+<div class="row">
+
+    <div class="col-md-7">
+
+        <div class="card mb-3">
+
+            <div class="card-header">
+                <strong>Student Information</strong>
+            </div>
+
+            <div class="card-body">
+
+                <table class="table table-borderless">
+
+                    <tr>
+                        <th width="35%">Roll Number</th>
+                        <td>{{ registration.student.roll_number }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Student Name</th>
+                        <td>{{ registration.student.student_name }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Father Name</th>
+                        <td>{{ registration.student.father_name }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Programme</th>
+                        <td>{{ registration.student.programme.programme_name }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Entry Type</th>
+                        <td>{{ registration.student.programme_entry_type }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Admission Category</th>
+                        <td>{{ registration.student.admission_category }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Admission Academic Year</th>
+                        <td>{{ registration.student.admission_academic_year }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Current Semester</th>
+                        <td>Semester {{ registration.semester }}</td>
+                    </tr>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-5">
+
+        <div class="card mb-3">
+
+            <div class="card-header">
+                <strong>Registration Details</strong>
+            </div>
+
+            <div class="card-body">
+
+                <table class="table table-borderless">
+
+                    <tr>
+                        <th width="45%">Registration Cycle</th>
+                        <td>{{ registration.registration_window.registration_cycle }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Registration Date</th>
+                        <td>{{ registration.registration_date|date:"d M Y" }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Status</th>
+                        <td>{{ registration.get_registration_status_display }}</td>
+                    </tr>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card mb-3">
+
+    <div class="card-header">
+        <strong>Academic History</strong>
+    </div>
+
+    <div class="card-body">
+
+        {% if show_no_previous_history %}
+
+            <div class="alert alert-info mb-0">
+
+                No previous semester results available.
+
+            </div>
+
+        {% else %}
+
+            <div class="alert alert-secondary mb-0">
+
+                Previous semester results will appear here after the
+                <strong>Results Module</strong> is implemented.
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+<div class="card mb-3">
+
+    <div class="card-header">
+        <strong>Backlog Details</strong>
+    </div>
+
+    <div class="card-body">
+
+        {% if show_no_previous_history %}
+
+            <div class="alert alert-success mb-0">
+
+                No backlog.
+
+            </div>
+
+        {% else %}
+
+            <div class="alert alert-secondary mb-0">
+
+                Backlog details will appear here after the
+                <strong>Results Module</strong> is implemented.
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <div class="card mb-3">
+
+        <div class="card-header">
+            <strong>Remarks</strong>
+        </div>
+
+        <div class="card-body">
+
+            <textarea
+                name="remarks"
+                class="form-control"
+                rows="4"
+                placeholder="Enter remarks...">{{ registration.remarks }}</textarea>
+
+        </div>
+
+    </div>
+
+    <div class="mt-3">
+
+        <button
+            type="submit"
+            name="action"
+            value="approve"
+            class="btn btn-success">
+
+            Approve Registration
+
+        </button>
+
+        <button
+            type="submit"
+            name="action"
+            value="reject"
+            class="btn btn-danger">
+
+            Reject Registration
+
+        </button>
+
+        <a
+            href="{% url 'depm_pending_registrations' %}"
+            class="btn btn-secondary">
+
+            Back
+
+        </a>
+
+    </div>
+
+</form>
+
+{% endblock %}

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Faculty Subject Assignment</title>
+</head>
+
+<body>
+
+<h1>National Examination Management System (NEMS)</h1>
+
+<hr>
+
+<h2>Faculty Subject Assignment</h2>
+
+{% if message %}
+
+<p>
+    <strong>{{ message }}</strong>
+</p>
+
+{% endif %}
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <p>
+
+        Academic Year
+
+        <select name="academic_year">
+
+            {% for year in academic_years %}
+
+            <option value="{{ year.id }}">
+                {{ year }}
+            </option>
+
+            {% endfor %}
+
+        </select>
+
+    </p>
+
+    <p>
+
+        Curriculum
+
+        <select name="curriculum">
+
+            {% for curriculum in curriculums %}
+
+            <option value="{{ curriculum.id }}">
+                {{ curriculum }}
+            </option>
+
+            {% endfor %}
+
+        </select>
+
+    </p>
+
+    <p>
+
+        Subject
+
+        <select name="subject">
+
+            {% for subject in subjects %}
+
+            <option value="{{ subject.id }}">
+                {{ subject }}
+            </option>
+
+            {% endfor %}
+
+        </select>
+
+    </p>
+
+    <p>
+
+        Faculty
+
+        <select name="faculty">
+
+            {% for faculty in faculties %}
+
+            <option value="{{ faculty.id }}">
+                {{ faculty }}
+            </option>
+
+            {% endfor %}
+
+        </select>
+
+    </p>
+
+    <button type="submit">
+
+        Assign Faculty
+
+    </button>
+
+</form>
+
+<hr>
+
+<p>
+    <a href="/depm/">
+        Back to DEPM Dashboard
+    </a>
+</p>
+
+</body>
+</html>

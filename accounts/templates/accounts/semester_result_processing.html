@@ -1,0 +1,217 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block title %}
+Semester Result Processing
+{% endblock %}
+
+{% block page_content %}
+
+<h2>Semester Result Processing</h2>
+
+<hr>
+
+<form method="get">
+
+    <div class="mb-3">
+
+        <label class="form-label">
+
+            Examination
+
+        </label>
+
+        <select
+            name="examination"
+            class="form-select">
+
+            <option value="">
+                Select Examination
+            </option>
+
+            {% for examination in examinations %}
+
+                <option value="{{ examination.id }}">
+                    {{ examination }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+    <div class="mb-3">
+
+        <label class="form-label">
+
+            Semester
+
+        </label>
+
+        <select
+            name="semester"
+            class="form-select">
+
+            <option value="">
+                Select Semester
+            </option>
+
+            {% for sem in "123456"|make_list %}
+
+                <option value="{{ sem }}">
+                    Semester {{ sem }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+    <button
+        type="submit"
+        class="btn btn-primary">
+
+        Load Students
+
+    </button>
+
+</form>
+
+{% if selected_examination %}
+
+<hr>
+
+<h4>Eligible Students</h4>
+
+<p>
+
+    <strong>Total Students:</strong>
+
+    {{ students|length }}
+
+</p>
+
+<table class="table table-bordered">
+
+    <thead>
+
+        <tr>
+
+            <th>Roll Number</th>
+
+            <th>Student Name</th>
+
+            <th>SGPA</th>
+
+            <th>Result</th>
+
+            <th>Status</th>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+    {% for student in students %}
+
+        <tr>
+
+            <td>
+                {{ student.roll_number }}
+            </td>
+
+            <td>
+                {{ student }}
+            </td>
+
+            <td>
+
+                {% if student.semester_result %}
+
+                    {{ student.semester_result.sgpa }}
+
+                {% else %}
+
+                    --
+
+                {% endif %}
+
+            </td>
+
+            <td>
+
+                {% if student.semester_result %}
+
+                    {{ student.semester_result.result_status }}
+
+                {% else %}
+
+                    --
+
+                {% endif %}
+
+            </td>
+
+            <td>
+
+                {% if student.semester_result %}
+
+                    Processed
+
+                {% else %}
+
+                    Pending
+
+                {% endif %}
+
+            </td>
+
+        </tr>
+
+    {% empty %}
+
+        <tr>
+
+            <td colspan="2">
+
+                No students found.
+
+            </td>
+
+        </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% endif %}
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <input
+        type="hidden"
+        name="examination"
+        value="{{ selected_examination.id }}">
+
+    <input
+        type="hidden"
+        name="semester"
+        value="{{ selected_semester }}">
+
+    <button
+        type="submit"
+        class="btn btn-success">
+
+        Process Semester Result
+
+    </button>
+
+</form>
+
+{% endblock %}

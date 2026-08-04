@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Student Dashboard</title>
+</head>
+
+<body>
+
+    <h1>National Examination Management System (NEMS)</h1>
+
+    <hr>
+
+    <h2>Student Dashboard</h2>
+
+    <p>
+        Welcome <strong>{{ request.user.first_name }}</strong>
+    </p>
+
+    <p>
+        Username : {{ request.user.username }}
+    </p>
+
+    <hr>
+
+    {% if latest_registration %}
+
+    <h3>Current Semester Registration</h3>
+
+    <p>
+        <strong>Semester :</strong>
+        Semester {{ latest_registration.semester }}
+    </p>
+
+    <p>
+        <strong>Status :</strong>
+        {{ latest_registration.registration_status }}
+    </p>
+
+    <p>
+        <strong>Registration Date :</strong>
+        {{ latest_registration.registration_date }}
+    </p>
+
+    <hr>
+
+    {% endif %}
+
+    <h3>Student Services</h3>
+
+    <ul>
+
+        <li>
+            <a href="/student/semester-registration/">
+                Semester Registration
+            </a>
+        </li>
+
+        <li>
+            <a href="/student/examination-registration/">
+                Regular Examination Registration
+            </a>
+        </li>
+
+        <li>Hall Ticket</li>
+
+        <li>Results</li>
+
+        <li>Profile</li>
+
+        <li>Logout</li>
+
+    </ul>
+
+</body>
+
+</html>

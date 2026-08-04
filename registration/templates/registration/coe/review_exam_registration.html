@@ -1,0 +1,124 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block title %}
+Review Examination Registration
+{% endblock %}
+
+{% block page_content %}
+
+<h2>Review Examination Registration</h2>
+
+<hr>
+
+<h4>Student Details</h4>
+
+<p>
+<strong>Roll Number:</strong>
+{{ registration.student.roll_number }}
+</p>
+
+<p>
+<strong>Student Name:</strong>
+{{ registration.student.student_name }}
+</p>
+
+<p>
+<strong>Programme:</strong>
+{{ registration.student.programme.programme_name }}
+</p>
+
+<p>
+<strong>Semester:</strong>
+{{ registration.semester_registration.semester }}
+</p>
+
+<hr>
+
+<h4>Examination Details</h4>
+
+<p>
+<strong>Examination:</strong>
+{{ registration.examination.examination_name }}
+</p>
+
+<p>
+<strong>Registration Date:</strong>
+{{ registration.registration_date }}
+</p>
+
+<hr>
+
+<h4>Registered Subjects</h4>
+
+<table class="table table-bordered">
+
+<tr>
+    <th>Sr.</th>
+    <th>Subject Code</th>
+    <th>Subject Name</th>
+</tr>
+
+{% for subject in subjects %}
+
+<tr>
+
+    <td>{{ forloop.counter }}</td>
+
+    <td>{{ subject.subject_code }}</td>
+
+    <td>{{ subject.subject_name }}</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+<hr>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <div class="mb-3">
+
+        <label>
+            Remarks
+        </label>
+
+        <textarea
+            name="remarks"
+            class="form-control"
+            rows="3"
+        ></textarea>
+
+    </div>
+
+    <button
+        type="submit"
+        name="action"
+        value="approve"
+        class="btn btn-success"
+    >
+        Approve
+    </button>
+
+    <button
+        type="submit"
+        name="action"
+        value="reject"
+        class="btn btn-danger"
+    >
+        Reject
+    </button>
+
+    <a
+        href="{% url 'coe_pending_exam_registrations' %}"
+        class="btn btn-secondary"
+    >
+        Back
+    </a>
+
+</form>
+
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block title %}
+Examination Semester Mapping
+{% endblock %}
+
+{% block page_content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+    <h2>Examination Semester Mapping</h2>
+
+    <a href="{% url 'examination_semester_create' %}"
+       class="btn btn-primary">
+        + Add Mapping
+    </a>
+
+</div>
+
+<table class="table table-bordered table-hover">
+
+    <thead class="table-light">
+
+        <tr>
+            <th>Sr.</th>
+            <th>Examination</th>
+            <th>Semester</th>
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+    {% for mapping in mappings %}
+
+        <tr>
+
+            <td>{{ forloop.counter }}</td>
+
+            <td>{{ mapping.examination.examination_name }}</td>
+
+            <td>Semester {{ mapping.semester }}</td>
+
+        </tr>
+
+    {% empty %}
+
+        <tr>
+
+            <td colspan="3" class="text-center">
+                No mappings found.
+            </td>
+
+        </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% endblock %}

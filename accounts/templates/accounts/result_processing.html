@@ -1,0 +1,71 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block title %}
+Result Processing
+{% endblock %}
+
+{% block page_content %}
+
+<h2>Result Processing</h2>
+
+<hr>
+
+<table class="table table-bordered table-striped">
+
+    <thead>
+        <tr>
+            <th>Examination</th>
+            <th>Faculty</th>
+            <th>Subject</th>
+            <th>Academic Year</th>
+            <th>Curriculum</th>
+            <th>Students</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+    {% for assignment in processing_summary %}
+
+        <tr>
+
+            <td>{{ assignment.examination }}</td>
+
+            <td>{{ assignment.faculty }}</td>
+
+            <td>{{ assignment.subject.subject_name }}</td>
+
+            <td>{{ assignment.academic_year }}</td>
+
+            <td>{{ assignment.curriculum }}</td>
+
+            <td>{{ assignment.student_count }}</td>
+
+            <td>{{ assignment.status }}</td>
+
+            <td>
+                <a href="{% url 'process_result' assignment.faculty_assignment_id assignment.examination_id %}"
+                   class="btn btn-primary btn-sm">
+                    Process Result
+                </a>
+            </td>
+
+        </tr>
+
+    {% empty %}
+
+        <tr>
+            <td colspan="5" class="text-center">
+                No submitted faculty submissions found.
+            </td>
+        </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% endblock %}

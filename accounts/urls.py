@@ -1,0 +1,137 @@
+from django.urls import path
+
+from . import views
+
+
+urlpatterns = [
+    path(
+        "login/",
+        views.LoginPageView.as_view(),
+        name="login",
+    ),
+
+    path(
+        "student/",
+        views.student_dashboard,
+        name="student_dashboard",
+    ),
+
+    path(
+        "depm/",
+        views.depm_dashboard,
+        name="depm_dashboard",
+    ),
+
+    path(
+        "faculty/",
+        views.faculty_dashboard,
+        name="faculty_dashboard",
+    ),
+    path(
+        "depm/faculty-subject-assignment/",
+        views.faculty_subject_assignment,
+        name="faculty_subject_assignment",
+    ),
+    path(
+        "faculty/upload-question-papers/<int:assignment_id>/",
+        views.upload_question_papers,
+        name="upload_question_papers",
+    ),
+    path(
+        "coe/",
+        views.coe_dashboard,
+        name="coe_dashboard",
+    ),
+    path(
+        "coe/question-paper-selection/",
+        views.question_paper_selection,
+        name="question_paper_selection",
+    ),
+    path(
+        "coe/generate-question-paper/<int:assignment_id>/",
+        views.generate_question_paper_view,
+        name="generate_question_paper",
+    ),
+    path(
+        "faculty/enter-marks/<int:assignment_id>/",
+        views.enter_marks,
+        name="enter_marks",
+    ),
+    path(
+        "logout/",
+        views.logout_view,
+        name="logout",
+    ),
+    path(
+        "coe/marks-verification/",
+        views.coe_marks_verification,
+        name="coe_marks_verification",
+    ),
+    path(
+        "coe/verify/<int:faculty_assignment_id>/<int:examination_id>/",
+        views.coe_verify_submission,
+        name="coe_verify_submission",
+    ),
+
+    path(
+        "coe/approve/<int:faculty_assignment_id>/<int:examination_id>/",
+        views.coe_approve_submission,
+        name="coe_approve_submission",
+    ),
+    path(
+        "coe/return/<int:faculty_assignment_id>/<int:examination_id>/",
+        views.coe_return_submission,
+        name="coe_return_submission",
+    ),
+    path(
+        "coe/result-processing/",
+        views.result_processing,
+        name="result_processing",
+    ),
+    path(
+        "coe/process-result/<int:faculty_assignment_id>/<int:examination_id>/",
+        views.process_result,
+        name="process_result",
+    ),
+    path(
+        "semester-result-processing/",
+        views.semester_result_processing,
+        name="semester_result_processing",
+    ),
+    path(
+        "combined-result-processing/",
+        views.combined_result_processing,
+        name="combined_result_processing",
+    ),
+    path(
+        "semester-grade-sheet/<int:student_id>/<int:examination_id>/<int:semester>/",
+        views.semester_grade_sheet,
+        name="semester_grade_sheet",
+    ),
+    path(
+        "combined-grade-sheet/<int:student_id>/<int:examination_id>/",
+        views.combined_grade_sheet,
+        name="combined_grade_sheet",
+    ),
+
+    path(
+        "coe/result-publication/",
+        views.result_publication,
+        name="result_publication",
+    ),
+    path(
+        "coe/publish-result/<int:faculty_assignment_id>/<int:examination_id>/",
+        views.publish_result,
+        name="publish_result",
+    ),
+    path(
+        "coe/historical-result-import/",
+        views.historical_result_import,
+        name="historical_result_import",
+    ),
+    path(
+        "result-publication/",
+        views.result_publication,
+        name="result_publication",
+    ),
+]

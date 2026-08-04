@@ -1,0 +1,39 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block title %}
+Delete Assessment Window
+{% endblock %}
+
+{% block page_content %}
+
+<h2>Delete Assessment Window</h2>
+
+<p>
+
+Are you sure you want to delete
+
+<strong>{{ window.get_assessment_type_display }}</strong>
+
+for
+
+<strong>{{ window.examination.examination_name }}</strong>?
+
+</p>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <button type="submit"
+            class="btn btn-danger">
+        Delete
+    </button>
+
+    <a href="{% url 'assessment_window_list' %}"
+       class="btn btn-secondary">
+        Cancel
+    </a>
+
+</form>
+
+{% endblock %}

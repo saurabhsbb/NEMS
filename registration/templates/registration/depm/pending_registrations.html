@@ -1,0 +1,109 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+Pending Semester Registrations
+{% endblock %}
+
+{% block content %}
+
+<h2>DEPM Semester Registration Approval</h2>
+
+<hr>
+
+<h4>Pending Semester Registrations</h4>
+
+<table class="table table-bordered table-hover">
+
+    <thead class="table-light">
+
+        <tr>
+
+            <th>Roll No.</th>
+
+            <th>Student</th>
+
+            <th>Programme</th>
+
+            <th>Semester</th>
+
+            <th>Registration Date</th>
+
+            <th>Status</th>
+
+            <th>Action</th>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+    {% for registration in registrations %}
+
+        <tr>
+
+            <td>
+                {{ registration.student.roll_number }}
+            </td>
+
+            <td>
+                {{ registration.student }}
+            </td>
+
+            <td>
+                {{ registration.student.programme.programme_name }}
+            </td>
+
+            <td>
+                Semester {{ registration.semester }}
+            </td>
+
+            <td>
+                {{ registration.registration_date|date:"d M Y" }}
+            </td>
+
+            <td>
+                {{ registration.get_registration_status_display }}
+            </td>
+
+            <td>
+
+                <a href="{% url 'depm_review_registration' registration.id %}"
+                   class="btn btn-primary btn-sm">
+                    Review
+                </a>
+
+            </td>
+
+        </tr>
+
+    {% empty %}
+
+        <tr>
+
+            <td colspan="7" class="text-center">
+
+                No pending registrations.
+
+            </td>
+
+        </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
+<p>
+
+<a href="{% url 'depm_dashboard' %}"
+   class="btn btn-secondary">
+
+    ← Back to Dashboard
+
+</a>
+
+</p>
+
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block title %}
+Result Processing
+{% endblock %}
+
+{% block page_content %}
+
+<h2>Result Processing</h2>
+
+<hr>
+
+<table class="table table-bordered">
+
+    <tr>
+        <th>Examination</th>
+        <td>{{ entry.examination_registration.examination }}</td>
+    </tr>
+
+    <tr>
+        <th>Faculty</th>
+        <td>{{ entry.faculty_assignment.faculty }}</td>
+    </tr>
+
+    <tr>
+        <th>Subject</th>
+        <td>{{ entry.faculty_assignment.subject }}</td>
+    </tr>
+
+    <tr>
+        <th>Academic Year</th>
+        <td>{{ entry.faculty_assignment.academic_year }}</td>
+    </tr>
+
+    <tr>
+        <th>Curriculum</th>
+        <td>{{ entry.faculty_assignment.curriculum }}</td>
+    </tr>
+
+</table>
+
+<hr>
+
+<h4>Student Result</h4>
+
+<table class="table table-bordered table-striped">
+
+    <thead>
+        <tr>
+
+            <th>Roll No</th>
+            <th>Student Name</th>
+
+            <th>CT</th>
+            <th>AA</th>
+
+            <th>Theory</th>
+
+            <th>Practical Internal</th>
+            <th>Practical External</th>
+            <th>Total</th>
+            <th>%</th>
+            <th>Grade</th>
+            <th>Result</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+    {% for result in entries %}
+
+        <tr>
+
+            <td>
+                {{ result.examination_registration.student.roll_number }}
+            </td>
+
+            <td>
+                {{ result.examination_registration.student.student_name }}
+            </td>
+
+            <td>{{ result.class_test_marks }}</td>
+
+            <td>{{ result.attendance_assignment_marks }}</td>
+
+            <td>{{ result.theory_external_marks }}</td>
+
+            <td>{{ result.practical_internal_marks }}</td>
+
+            <td>{{ result.practical_external_marks }}</td>
+
+            <td>{{ result.total_marks|default_if_none:"" }}</td>
+
+            <td>{{ result.percentage|floatformat:2 }}</td>
+
+            <td>{{ result.grade|default_if_none:"" }}</td>
+
+            <td>{{ result.result_status|default_if_none:"" }}</td>
+
+        </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
+<hr>
+
+<div class="mt-3">
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        <button type="submit" class="btn btn-success">
+            Process Result
+        </button>
+
+        <a href="{% url 'result_processing' %}"
+           class="btn btn-secondary">
+            Cancel
+        </a>
+
+    </form>
+    
+</div>
+
+{% endblock %}

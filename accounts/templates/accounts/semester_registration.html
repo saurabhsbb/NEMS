@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Semester Registration</title>
+</head>
+
+<body>
+
+<h1>National Examination Management System (NEMS)</h1>
+
+<hr>
+
+<h2>Semester Registration</h2>
+
+<p>
+<strong>Student :</strong>
+{{ student.student_name }}
+</p>
+
+<p>
+<strong>Programme :</strong>
+{{ student.programme }}
+</p>
+
+<hr>
+
+{% if existing_registration %}
+
+<p>
+<strong>Status :</strong>
+{{ existing_registration.get_registration_status_display }}
+</p>
+
+<p>
+<strong>Semester :</strong>
+Semester {{ existing_registration.semester }}
+</p>
+
+<p>
+<strong>Registration Date :</strong>
+{{ existing_registration.registration_date }}
+</p>
+
+{% if existing_registration.registration_status == "SUBMITTED" %}
+
+<div style="padding:10px;border:1px solid #ffc107;background:#fff3cd;">
+    <strong>Your registration has been submitted successfully.</strong><br>
+    It is awaiting DEPM approval.
+</div>
+
+{% elif existing_registration.registration_status == "APPROVED" %}
+
+<div style="padding:10px;border:1px solid #d1e7dd;background:#d4edda;">
+    <strong>Your semester registration has been approved.</strong><br>
+    You are eligible for the next examination process.
+</div>
+
+{% elif existing_registration.registration_status == "REJECTED" %}
+
+<div style="padding:10px;border:1px solid #f5c2c7;background:#f8d7da;">
+    <strong>Your semester registration has been rejected.</strong><br><br>
+
+    <strong>Coordinator Remarks:</strong>
+
+    {% if existing_registration.remarks %}
+
+        <div style="margin-top:8px;padding:10px;border:1px solid #ccc;background:white;">
+            {{ existing_registration.remarks }}
+        </div>
+
+    {% else %}
+
+        <div style="margin-top:8px;">
+            No remarks were provided.
+        </div>
+
+    {% endif %}
+
+    <br>
+
+    Please contact the DEPM Coordinator if further clarification is required.
+
+</div>
+
+{% elif existing_registration.registration_status == "CANCELLED" %}
+
+<div style="padding:10px;border:1px solid #e2e3e5;background:#f8f9fa;">
+    <strong>Your semester registration has been cancelled.</strong><br>
+    Please contact the Examination Section.
+</div>
+
+{% endif %}
+
+<hr>
+
+<p>
+<a href="/student/">
+Back to Dashboard
+</a>
+</p>
+
+{% elif registration_window %}
+
+<p>
+Registration Window is
+<strong>OPEN</strong>
+</p>
+
+<p>
+Academic Year :
+{{ registration_window.academic_year }}
+</p>
+
+<p>
+Registration Cycle :
+{{ registration_window.registration_cycle }}
+</p>
+
+<hr>
+
+<h3>Select Semester</h3>
+
+<form
+    method="post"
+    action="/student/review-registration/"
+>
+
+    {% csrf_token %}
+
+    {% for semester in semester_choices %}
+
+        <p>
+
+            <input
+                type="radio"
+                name="semester"
+                value="{{ semester }}"
+                required
+            >
+
+            Semester {{ semester }}
+
+        </p>
+
+    {% endfor %}
+
+    <button type="submit">
+
+        Continue
+
+    </button>
+
+</form>
+
+{% else %}
+
+<p>
+
+No Registration Window is currently open.
+
+</p>
+
+{% endif %}
+
+<hr>
+
+<p>
+
+<a href="/student/">
+
+Back to Dashboard
+
+</a>
+
+</p>
+
+</body>
+
+</html>
