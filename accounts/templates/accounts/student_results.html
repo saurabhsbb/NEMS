@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Student Results</title>
+</head>
+
+<body>
+
+<h2>Student Results</h2>
+
+<hr>
+
+<p>
+<strong>Roll Number :</strong>
+{{ student.roll_number }}
+</p>
+
+<p>
+<strong>Name :</strong>
+{{ student.student_name }}
+</p>
+
+<p>
+<strong>Programme :</strong>
+{{ student.programme }}
+</p>
+
+<hr>
+
+<h3>Published Results</h3>
+
+<table border="1" cellpadding="8">
+
+<tr>
+
+    <th>Examination</th>
+
+    <th>Semester</th>
+
+    <th>SGPA</th>
+
+    <th>Result</th>
+
+    <th>Actions</th>
+
+</tr>
+
+{% for item in published_results %}
+
+<tr>
+
+    <td>
+
+        {{ item.semester_result.examination }}
+
+    </td>
+
+    <td>
+
+        {{ item.semester_result.semester }}
+
+    </td>
+
+    <td>
+
+        {{ item.semester_result.sgpa }}
+
+    </td>
+
+    <td>
+
+        {{ item.semester_result.result_status }}
+
+    </td>
+
+    <td>
+
+        <a href="{% url 'student_semester_grade_sheet' item.semester_result.examination.id item.semester_result.semester %}">
+            Semester Grade Sheet
+        </a>
+
+    </td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+
+    <td colspan="5">
+
+        No published results available.
+
+    </td>
+
+</tr>
+
+{% endfor %}
+
+</table>     
+
+<hr>
+
+<h3>Overall Academic Record</h3>
+
+{% if latest_examination %}
+
+<p>
+
+<a href="{% url 'student_combined_grade_sheet' %}">
+
+    Combined Grade Sheet
+
+</a>
+
+</p>
+
+{% endif %}
+
+<p>
+<a href="{% url 'student_dashboard' %}">
+Back to Dashboard
+</a>
+</p>
+
+</body>
+
+</html>
+

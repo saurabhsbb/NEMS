@@ -1,0 +1,60 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block page_content %}
+
+<h2>Combined Grade Sheets</h2>
+
+<table class="table table-bordered">
+
+    <thead>
+
+        <tr>
+
+            <th>Roll No.</th>
+
+            <th>Student Name</th>
+
+            <th>CGPA</th>
+
+            <th>Result</th>
+
+            <th>Action</th>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+    {% for item in student_results %}
+
+        <tr>
+
+            <td>{{ item.student.roll_number }}</td>
+
+            <td>{{ item.student.student_name }}</td>
+
+            <td>{{ item.combined_result.cgpa }}</td>
+
+            <td>{{ item.combined_result.result_status }}</td>
+
+            <td>
+
+                <a class="btn btn-primary btn-sm"
+                   href="{% url 'combined_grade_sheet' item.student.id item.combined_result.examination.id %}"
+
+                    View Combined Grade Sheet
+
+                </a>
+
+            </td>
+
+        </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% endblock %}

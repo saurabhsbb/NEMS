@@ -89,10 +89,15 @@ def calculate_cgpa(
     Calculate and store Combined Result.
     """
 
+    current_semester = SemesterResult.objects.get(
+        student=student,
+        examination=examination,
+    ).semester
+
     semester_results = (
         SemesterResult.objects.filter(
             student=student,
-            examination=examination,
+            semester__lte=current_semester,
         ).order_by("semester")
     )
 
@@ -120,7 +125,7 @@ def calculate_cgpa(
 
             *
 
-            semester_result.registered_credits
+            semester_result.earned_credits
 
         )
 
@@ -133,7 +138,7 @@ def calculate_cgpa(
         cgpa = (
             weighted_sgpa
             /
-            registered_credits
+            earned_credits
         )
 
     else:

@@ -134,4 +134,30 @@ urlpatterns = [
         views.result_publication,
         name="result_publication",
     ),
+    path(
+        "student/results/",
+        views.student_results,
+        name="student_results",
+    ),
+    path(
+        "semester-grade-sheets/",
+        views.semester_grade_sheet_list,
+        name="semester_grade_sheet_list",
+    ),
+    path(
+        "combined-grade-sheets/",
+        views.combined_grade_sheet_list,
+        name="combined_grade_sheet_list",
+    ),
+    path(
+        "student/semester-grade-sheet/<int:examination_id>/<int:semester>/",
+        views.student_semester_grade_sheet,
+        name="student_semester_grade_sheet",
+    ),
+
+    path(
+        "student/combined-grade-sheet/",
+        views.student_combined_grade_sheet,
+        name="student_combined_grade_sheet",
+    ),
 ]

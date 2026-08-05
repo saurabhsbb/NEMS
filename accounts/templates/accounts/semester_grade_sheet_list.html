@@ -1,0 +1,67 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block page_content %}
+
+<h2>Semester Grade Sheets</h2>
+
+<table class="table table-bordered">
+
+<thead>
+
+<tr>
+
+<th>Roll No.</th>
+
+<th>Student Name</th>
+
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for student in students %}
+
+<tr>
+
+<td>
+
+{{ student.roll_number }}
+
+</td>
+
+<td>
+
+{{ student.student_name }}
+
+</td>
+
+<td>
+
+{% for result in student.semester_results.all %}
+
+<a
+class="btn btn-sm btn-primary"
+href="{% url 'semester_grade_sheet' student.id result.examination.id result.semester %}">
+
+Semester {{ result.semester }}
+
+</a>
+
+<br><br>
+
+{% endfor %}
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+{% endblock %}

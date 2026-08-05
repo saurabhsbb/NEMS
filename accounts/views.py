@@ -1722,6 +1722,165 @@ def result_publication(request):
         },
     )
 
+@login_required
+def student_results(request):
+
+    student = Student.objects.get(
+        user=request.user
+    )
+
+    semester_results = SemesterResult.objects.filter(
+        student=student,
+    ).select_related(
+        "examination",
+    ).order_by(
+        "semester",
+    )
+
+    published_results = []
+
+    for result in semester_results:
+
+        publication = ResultPublication.objects.filter(
+            examination=result.examination,
+            semester=result.semester,
+            is_published=True,
+        ).first()
+
+        if publication:
+
+            published_results.append(
+                {
+                    "semester_result": result,
+                    "publication": publication,
+                }
+            )
+
+    latest_examination = None
+
+    if published_results:
+
+        latest_examination = published_results[-1]["semester_result"].examination
+
+    return render(
+        request,
+        "accounts/student_results.html",
+        {
+            "student": student,
+            "published_results": published_results,
+            "latest_examination": latest_examination,
+        },
+    )
+
+@login_required
+def semester_grade_sheet_list(request):
+
+    students = (
+        Student.objects.filter(
+            semester_results__isnull=False
+        )
+        .distinct()
+        .order_by("roll_number")
+    )
+
+    return render(
+        request,
+        "accounts/semester_grade_sheet_list.html",
+        {
+            "students": students,
+        },
+    )
+
+@login_required
+def combined_grade_sheet_list(request):
+
+    students = (
+        Student.objects.filter(
+            combined_results__isnull=False
+        )
+        .distinct()
+        .order_by("roll_number")
+    )
+
+    student_results = []
+
+    for student in students:
+
+        latest_result = (
+            CombinedResult.objects.filter(
+                student=student
+            )
+            .order_by("-examination__id")
+            .first()
+        )
+
+        if latest_result:
+
+            student_results.append(
+                {
+                    "student": student,
+                    "combined_result": latest_result,
+                }
+            )
+
+    return render(
+        request,
+        "accounts/combined_grade_sheet_list.html",
+        {
+            "student_results": student_results,
+        },
+    )
+
+@login_required
+def student_semester_grade_sheet(
+    request,
+    examination_id,
+    semester,
+):
+
+    student = Student.objects.get(
+        user=request.user
+    )
+
+    return semester_grade_sheet(
+        request,
+        student.id,
+        examination_id,
+        semester,
+    )
+
+@login_required
+def student_combined_grade_sheet(request):
+
+    student = Student.objects.get(
+        user=request.user
+    )
+
+    latest_result = (
+        CombinedResult.objects.filter(
+            student=student,
+        )
+        .order_by("-examination__id")
+        .first()
+    )
+
+    if latest_result is None:
+
+        messages.error(
+            request,
+            "Combined Grade Sheet is not available."
+        )
+
+        return redirect(
+            "student_results"
+        )
+
+    return combined_grade_sheet(
+        request,
+        student.id,
+        latest_result.examination.id,
+    )
+
 def logout_view(request):
     logout(request)
     return redirect("login")

@@ -101,8 +101,21 @@ NEMS - Controller of Examinations
 
                 </a>
 
-            </li>
+                <a href="{% url 'semester_grade_sheet_list' %}"
+                   class="list-group-item list-group-item-action">
 
+                    Semester Grade Sheets
+
+                </a>
+
+
+                <a href="{% url 'combined_grade_sheet_list' %}"
+                   class="list-group-item list-group-item-action">
+
+                    Combined Grade Sheets
+
+                </a>
+            
                 <a href="{% url 'historical_result_import' %}"
                    class="list-group-item list-group-item-action">
                     Historical Result Import
