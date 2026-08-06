@@ -1,0 +1,138 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+
+<h2>Backlog Examination Registration</h2>
+
+<hr>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <div class="mb-3">
+
+        <label>
+
+            Backlog Examination
+
+        </label>
+
+        <select
+            name="examination"
+            class="form-control">
+
+            <option value="">
+
+                Select Examination
+
+            </option>
+
+            {% for examination in examinations %}
+
+            <option value="{{ examination.id }}">
+
+                {{ examination }}
+
+            </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+    <button
+        type="submit"
+        class="btn btn-primary">
+
+        Search Failed Subjects
+
+    </button>
+
+    {% if failed_subjects %}
+
+    <hr>
+
+    <h4>Eligible Backlog Subjects</h4>
+
+    <table class="table table-bordered">
+
+        <thead>
+
+            <tr>
+
+                <th>Select</th>
+
+                <th>Subject Code</th>
+
+                <th>Subject Name</th>
+
+                <th>Semester</th>
+
+                <th>Credits</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+        {% for subject in failed_subjects %}
+
+            <tr>
+
+                <td>
+
+                    <input
+                        type="checkbox"
+                        name="subjects"
+                        value="{{ subject.id }}">
+
+                </td>
+
+                <td>
+
+                    {{ subject.subject_code }}
+
+                </td>
+
+                <td>
+
+                    {{ subject.subject_name }}
+
+                </td>
+
+                <td>
+
+                    {{ subject.semester }}
+
+                </td>
+
+                <td>
+
+                    {{ subject.credits }}
+
+                </td>
+
+            </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    <button
+        type="submit"
+        class="btn btn-success">
+
+        Register Selected Subjects
+
+    </button>
+
+    {% endif %}
+
+</form>
+
+{% endblock %}

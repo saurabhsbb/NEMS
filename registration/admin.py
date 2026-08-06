@@ -11,6 +11,16 @@ from .models import (
     ExaminationRegistration,
 )
 
+from .models import (
+    SemesterRegistrationWindow,
+    SemesterRegistration,
+    ExaminationRegistration,
+    BacklogRegistration,
+    BacklogRegistrationSubject,
+)
+
+admin.site.register(BacklogRegistration)
+admin.site.register(BacklogRegistrationSubject)
 @admin.register(SemesterRegistrationWindow)
 class SemesterRegistrationWindowAdmin(admin.ModelAdmin):
 

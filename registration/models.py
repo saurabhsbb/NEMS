@@ -1,3 +1,4 @@
+from academics.models import Subject
 from django.db import models
 from django.conf import settings
 from academics.models import (
@@ -217,3 +218,121 @@ class ExaminationRegistration(models.Model):
         return (
             f"{self.student} - {self.examination}"
         )
+
+class BacklogRegistration(models.Model):
+
+    BACKLOG_REGISTRATION_STATUS = [
+
+        ("SUBMITTED", "Submitted"),
+
+        ("APPROVED", "Approved"),
+
+        ("REJECTED", "Rejected"),
+
+    ]
+
+    examination = models.ForeignKey(
+        "examinations.Examination",
+        on_delete=models.PROTECT,
+    )
+
+    student = models.ForeignKey(
+        Student,
+        on_delete=models.PROTECT,
+    )
+
+    registration_date = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    registration_status = models.CharField(
+        max_length=20,
+        choices=BACKLOG_REGISTRATION_STATUS,
+        default="SUBMITTED",
+    )
+
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="approved_backlog_registrations",
+    )
+
+    approved_on = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    remarks = models.TextField(
+        blank=True,
+    )
+
+    class Meta:
+
+        ordering = [
+            "-registration_date",
+        ]
+
+        constraints = [
+
+            models.UniqueConstraint(
+
+                fields=[
+                    "examination",
+                    "student",
+                ],
+
+                name="unique_backlog_registration",
+
+            )
+
+        ]
+
+    def __str__(self):
+
+        return (
+            f"{self.student} - {self.examination}"
+        )
+
+class BacklogRegistrationSubject(models.Model):
+
+    backlog_registration = models.ForeignKey(
+        BacklogRegistration,
+        on_delete=models.CASCADE,
+        related_name="subjects",
+    )
+
+    subject = models.ForeignKey(
+        Subject,
+        on_delete=models.PROTECT,
+    )
+
+    class Meta:
+
+        ordering = [
+            "subject",
+        ]
+
+        constraints = [
+
+            models.UniqueConstraint(
+
+                fields=[
+                    "backlog_registration",
+                    "subject",
+                ],
+
+                name="unique_backlog_subject",
+
+            )
+
+        ]
+
+    def __str__(self):
+
+        return (
+            f"{self.backlog_registration.student.roll_number} - "
+            f"{self.subject.subject_code}"
+        )
+

@@ -160,4 +160,9 @@ urlpatterns = [
         views.student_combined_grade_sheet,
         name="student_combined_grade_sheet",
     ),
+    path(
+        "student/backlog-registration/",
+        views.student_backlog_registration,
+        name="student_backlog_registration",
+    ),
 ]

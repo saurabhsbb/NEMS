@@ -1,6 +1,7 @@
 from results.services import (
     calculate_sgpa,
     calculate_cgpa,
+    get_backlog_subjects,
 )
 from academics.models import Subject
 from openpyxl import load_workbook
@@ -1884,3 +1885,39 @@ def student_combined_grade_sheet(request):
 def logout_view(request):
     logout(request)
     return redirect("login")
+
+@login_required
+def student_backlog_registration(request):
+
+    examinations = (
+        Examination.objects.filter(
+            examination_type__code="BLG",
+            is_active=True,
+        ).order_by("-id")
+    )
+
+    failed_subjects = []
+
+    if request.method == "POST":
+
+        selected_examination = Examination.objects.get(
+            id=request.POST.get("examination")
+        )
+
+        student = Student.objects.get(
+            user=request.user
+        )
+
+        failed_subjects = get_backlog_subjects(
+            student,
+            selected_examination,
+        )
+
+    return render(
+        request,
+        "accounts/student_backlog_registration.html",
+        {
+            "examinations": examinations,
+            "failed_subjects": failed_subjects,
+        },
+    )

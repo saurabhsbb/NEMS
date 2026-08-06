@@ -1,5 +1,6 @@
 from decimal import Decimal
-
+from examinations.models import ExaminationSemester
+from results.models import StudentAcademicResult
 from .models import (
     StudentAcademicResult,
     SemesterResult,
@@ -163,3 +164,57 @@ def calculate_cgpa(
 
         },
     )
+
+def get_backlog_subjects(
+    student,
+    examination,
+):
+
+    mapped_semesters = list(
+
+        ExaminationSemester.objects.filter(
+            examination=examination,
+        ).values_list(
+            "semester",
+            flat=True,
+        )
+
+    )
+
+    academic_results = (
+
+        StudentAcademicResult.objects.filter(
+            student=student,
+            subject__semester__in=mapped_semesters,
+        )
+        .select_related("subject")
+        .order_by(
+            "subject_id",
+            "-created_on",
+        )
+
+    )
+
+    latest_results = {}
+
+    for result in academic_results:
+
+        if result.subject_id not in latest_results:
+
+            latest_results[result.subject_id] = result
+
+    failed_subjects = []
+
+    for result in latest_results.values():
+
+        if result.result_status == "FAIL":
+
+            failed_subjects.append(result.subject)
+
+    print("--------------------------------")
+    print("Failed Subjects")
+    for subject in failed_subjects:
+        print(subject.subject_code, subject.subject_name)
+    print("--------------------------------")
+
+    return failed_subjects
