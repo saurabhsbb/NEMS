@@ -51,6 +51,10 @@ from evaluation.services import (
 from registration.models import SemesterRegistration
 from django.contrib.auth import logout
 from django.shortcuts import redirect
+from registration.models import (
+    BacklogRegistration,
+    BacklogRegistrationSubject,
+)
 
 class LoginPageView(LoginView):
 
@@ -1898,20 +1902,116 @@ def student_backlog_registration(request):
 
     failed_subjects = []
 
+    selected_examination_id = None
+
     if request.method == "POST":
+
+        print(request.POST)
 
         selected_examination = Examination.objects.get(
             id=request.POST.get("examination")
         )
 
+        selected_examination_id = selected_examination.id
+
         student = Student.objects.get(
             user=request.user
         )
 
-        failed_subjects = get_backlog_subjects(
-            student,
-            selected_examination,
-        )
+        action = request.POST.get("action")
+
+        if action == "search":
+
+            failed_subjects = get_backlog_subjects(
+                student,
+                selected_examination,
+            )
+
+        elif action == "register":
+
+            selected_subject_ids = request.POST.getlist("subjects")
+
+            selected_subject_ids = request.POST.getlist(
+                "subjects"
+            )
+
+            if not selected_subject_ids:
+
+                messages.error(
+                    request,
+                    "Please select at least one subject."
+                )
+
+                failed_subjects = get_backlog_subjects(
+                    student,
+                    selected_examination,
+                )
+
+            else:
+
+                backlog_registration, created = (
+                    BacklogRegistration.objects.get_or_create(
+
+                        student=student,
+
+                        examination=selected_examination,
+
+                        defaults={
+                            "registration_status": "SUBMITTED",
+                        },
+
+                    )
+                )
+
+                newly_registered = 0
+
+                already_registered = 0
+
+                for subject_id in selected_subject_ids:
+
+                    _, created = (
+                        BacklogRegistrationSubject.objects.get_or_create(
+
+                            backlog_registration=backlog_registration,
+
+                            subject_id=subject_id,
+
+                        )
+                    )
+
+                    if created:
+
+                        newly_registered += 1
+
+                    else:
+
+                        already_registered += 1
+
+                if newly_registered > 0 and already_registered == 0:
+
+                    messages.success(
+                        request,
+                        f"{newly_registered} subject(s) registered successfully."
+                    )
+
+                elif newly_registered > 0 and already_registered > 0:
+
+                    messages.success(
+                        request,
+                        f"{newly_registered} subject(s) registered successfully. "
+                        f"{already_registered} subject(s) were already registered."
+                    )
+
+                else:
+
+                    messages.warning(
+                        request,
+                        "You have already registered for all the selected subjects."
+                    )
+
+                return redirect(
+                    "student_backlog_registration"
+                )
 
     return render(
         request,
@@ -1919,5 +2019,6 @@ def student_backlog_registration(request):
         {
             "examinations": examinations,
             "failed_subjects": failed_subjects,
+            "selected_examination_id": selected_examination_id,
         },
     )

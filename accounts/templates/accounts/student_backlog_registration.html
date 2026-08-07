@@ -30,10 +30,13 @@
 
             {% for examination in examinations %}
 
-            <option value="{{ examination.id }}">
-
+            <option
+                value="{{ examination.id }}"
+                {% if examination.id == selected_examination_id %}
+                    selected
+                {% endif %}
+            >
                 {{ examination }}
-
             </option>
 
             {% endfor %}
@@ -44,10 +47,12 @@
 
     <button
         type="submit"
+        name="action"
+        value="search"
         class="btn btn-primary">
 
         Search Failed Subjects
-
+ 
     </button>
 
     {% if failed_subjects %}
@@ -125,6 +130,8 @@
 
     <button
         type="submit"
+        name="action"
+        value="register"
         class="btn btn-success">
 
         Register Selected Subjects
