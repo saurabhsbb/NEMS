@@ -1,0 +1,104 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block page_content %}
+
+<h2>Pending Backlog Registrations</h2>
+
+<table class="table table-bordered">
+
+<thead>
+
+<tr>
+
+<th>Roll No.</th>
+
+<th>Student</th>
+
+<th>Examination</th>
+
+<th>Status</th>
+
+<th>Subjects</th>
+
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for registration in registrations %}
+
+<tr>
+
+<td>
+
+{{ registration.student.roll_number }}
+
+</td>
+
+<td>
+
+{{ registration.student.student_name }}
+
+</td>
+
+<td>
+
+{{ registration.examination }}
+
+</td>
+
+<td>
+
+{{ registration.registration_status }}
+
+</td>
+
+<td>
+
+{% for subject in registration.subjects.all %}
+
+{{ subject.subject.subject_code }}
+-
+{{ subject.subject.subject_name }}
+
+<br>
+
+{% endfor %}
+
+</td>
+
+<td>
+
+<button
+class="btn btn-success btn-sm">
+
+Approve
+
+</button>
+
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+
+<td colspan="6">
+
+No pending registrations.
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+{% endblock %}

@@ -1896,6 +1896,7 @@ def student_backlog_registration(request):
     examinations = (
         Examination.objects.filter(
             examination_type__code="BLG",
+            status="REGISTRATION_OPEN",
             is_active=True,
         ).order_by("-id")
     )
@@ -1908,8 +1909,29 @@ def student_backlog_registration(request):
 
         print(request.POST)
 
+        selected_examination_id = request.POST.get(
+            "examination"
+        )
+
+        if not selected_examination_id:
+
+            messages.warning(
+                request,
+                "No backlog examination registration is currently open."
+            )
+
+            return render(
+                request,
+                "accounts/student_backlog_registration.html",
+                {
+                    "examinations": examinations,
+                    "failed_subjects": [],
+                    "selected_examination_id": None,
+                },
+            )
+
         selected_examination = Examination.objects.get(
-            id=request.POST.get("examination")
+            id=selected_examination_id
         )
 
         selected_examination_id = selected_examination.id
@@ -2020,5 +2042,29 @@ def student_backlog_registration(request):
             "examinations": examinations,
             "failed_subjects": failed_subjects,
             "selected_examination_id": selected_examination_id,
+        },
+    )
+
+@login_required
+def coe_backlog_registrations(request):
+
+    registrations = (
+        BacklogRegistration.objects.filter(
+            registration_status="SUBMITTED"
+        )
+        .select_related(
+            "student",
+            "examination",
+        )
+        .order_by(
+            "student__roll_number",
+        )
+    )
+
+    return render(
+        request,
+        "accounts/coe_backlog_registrations.html",
+        {
+            "registrations": registrations,
         },
     )

@@ -165,4 +165,10 @@ urlpatterns = [
         views.student_backlog_registration,
         name="student_backlog_registration",
     ),
+    path(
+        "coe/backlog-registrations/",
+        views.coe_backlog_registrations,
+        name="coe_backlog_registrations",
+    ),
+
 ]

@@ -45,6 +45,8 @@
 
     </div>
 
+    {% if examinations %}
+
     <button
         type="submit"
         name="action"
@@ -52,8 +54,18 @@
         class="btn btn-primary">
 
         Search Failed Subjects
- 
+
     </button>
+
+    {% else %}
+
+    <div class="alert alert-info">
+
+        No backlog examination registration is currently open.
+
+    </div>
+
+    {% endif %}
 
     {% if failed_subjects %}
 
