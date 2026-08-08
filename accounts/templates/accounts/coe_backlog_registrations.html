@@ -2,103 +2,127 @@
 
 {% block page_content %}
 
-<h2>Pending Backlog Registrations</h2>
+<h2>Backlog Registration Approval</h2>
 
-<table class="table table-bordered">
-
-<thead>
-
-<tr>
-
-<th>Roll No.</th>
-
-<th>Student</th>
-
-<th>Examination</th>
-
-<th>Status</th>
-
-<th>Subjects</th>
-
-<th>Action</th>
-
-</tr>
-
-</thead>
-
-<tbody>
+<hr>
 
 {% for registration in registrations %}
 
-<tr>
+<div class="card mb-4">
 
-<td>
+    <div class="card-body">
 
-{{ registration.student.roll_number }}
+        <h5>
+            {{ registration.student.roll_number }}
+            -
+            {{ registration.student.student_name }}
+        </h5>
 
-</td>
+        <p>
+            <strong>Examination:</strong>
+            {{ registration.examination }}
+        </p>
 
-<td>
+        <p>
+            <strong>Status:</strong>
+            {{ registration.registration_status }}
+        </p>
 
-{{ registration.student.student_name }}
+        <h6>Registered Subjects</h6>
 
-</td>
+        <ul>
 
-<td>
+            {% for subject in registration.subjects.all %}
 
-{{ registration.examination }}
+            <li>
+                {{ subject.subject.subject_code }}
+                -
+                {{ subject.subject.subject_name }}
+            </li>
 
-</td>
+            {% endfor %}
 
-<td>
+        </ul>
 
-{{ registration.registration_status }}
+        <hr>
 
-</td>
+        <!-- Approve -->
 
-<td>
+        <form method="post" style="display: inline;">
 
-{% for subject in registration.subjects.all %}
+            {% csrf_token %}
 
-{{ subject.subject.subject_code }}
--
-{{ subject.subject.subject_name }}
+            <input
+                type="hidden"
+                name="registration_id"
+                value="{{ registration.id }}"
+            >
 
-<br>
+            <input
+                type="hidden"
+                name="action"
+                value="approve"
+            >
 
-{% endfor %}
+            <button
+                type="submit"
+                class="btn btn-success">
 
-</td>
+                Approve
 
-<td>
+            </button>
 
-<button
-class="btn btn-success btn-sm">
+        </form>
 
-Approve
 
-</button>
+        <!-- Reject -->
 
-</td>
+        <form method="post" style="display: inline;">
 
-</tr>
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="registration_id"
+                value="{{ registration.id }}"
+            >
+
+            <input
+                type="hidden"
+                name="action"
+                value="reject"
+            >
+
+            <input
+                type="text"
+                name="remarks"
+                placeholder="Reason for rejection"
+                class="form-control d-inline-block"
+                style="width: 300px;"
+            >
+
+            <button
+                type="submit"
+                class="btn btn-danger">
+
+                Reject
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
 
 {% empty %}
 
-<tr>
+<div class="alert alert-info">
 
-<td colspan="6">
+    No pending registrations.
 
-No pending registrations.
-
-</td>
-
-</tr>
+</div>
 
 {% endfor %}
-
-</tbody>
-
-</table>
 
 {% endblock %}

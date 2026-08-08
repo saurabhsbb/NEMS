@@ -55,6 +55,9 @@ from registration.models import (
     BacklogRegistration,
     BacklogRegistrationSubject,
 )
+from django.shortcuts import (
+    get_object_or_404,
+)
 
 class LoginPageView(LoginView):
 
@@ -1905,6 +1908,8 @@ def student_backlog_registration(request):
 
     selected_examination_id = None
 
+    rejected_registration = None
+
     if request.method == "POST":
 
         print(request.POST)
@@ -1940,6 +1945,15 @@ def student_backlog_registration(request):
             user=request.user
         )
 
+        rejected_registration = (
+            BacklogRegistration.objects.filter(
+                student=student,
+                examination=selected_examination,
+                registration_status="REJECTED",
+            )
+            .first()
+        )
+
         action = request.POST.get("action")
 
         if action == "search":
@@ -1970,6 +1984,52 @@ def student_backlog_registration(request):
                 )
 
             else:
+
+                existing_registration = (
+                    BacklogRegistration.objects.filter(
+                        student=student,
+                        examination=selected_examination,
+                    ).first()
+                )
+
+                if existing_registration and (
+                    existing_registration.registration_status == "APPROVED"
+                ):
+
+                    messages.warning(
+                        request,
+                        "Your backlog registration has already been approved and is locked."
+                    )
+
+                    return redirect(
+                        "student_backlog_registration"
+                    )
+
+                was_rejected = False
+
+                if existing_registration and (
+                    existing_registration.registration_status == "REJECTED"
+                ):
+
+                    was_rejected = True
+
+                    existing_registration.registration_status = "SUBMITTED"
+
+                    existing_registration.approved_by = None
+
+                    existing_registration.approved_on = None
+
+                    existing_registration.save(
+                        update_fields=[
+                            "registration_status",
+                            "approved_by",
+                            "approved_on",
+                        ]
+                    )
+
+                    BacklogRegistrationSubject.objects.filter(
+                        backlog_registration=existing_registration
+                    ).delete()
 
                 backlog_registration, created = (
                     BacklogRegistration.objects.get_or_create(
@@ -2042,11 +2102,85 @@ def student_backlog_registration(request):
             "examinations": examinations,
             "failed_subjects": failed_subjects,
             "selected_examination_id": selected_examination_id,
+            "rejected_registration": rejected_registration,
         },
     )
 
 @login_required
 def coe_backlog_registrations(request):
+
+    if request.method == "POST":
+
+        registration_id = request.POST.get(
+            "registration_id"
+        )
+
+        action = request.POST.get(
+            "action"
+        )
+
+        registration = get_object_or_404(
+            BacklogRegistration,
+            id=registration_id,
+            registration_status="SUBMITTED",
+        )
+
+        if action == "approve":
+
+            registration.registration_status = "APPROVED"
+
+            registration.approved_by = request.user
+
+            registration.approved_on = timezone.now()
+
+            registration.remarks = ""
+
+            registration.save(
+                update_fields=[
+                    "registration_status",
+                    "approved_by",
+                    "approved_on",
+                    "remarks",
+                ]
+            )
+
+            messages.success(
+                request,
+                "Backlog registration approved successfully."
+            )
+
+        elif action == "reject":
+
+            remarks = request.POST.get(
+                "remarks",
+                ""
+            ).strip()
+
+            registration.registration_status = "REJECTED"
+
+            registration.approved_by = request.user
+
+            registration.approved_on = timezone.now()
+
+            registration.remarks = remarks
+
+            registration.save(
+                update_fields=[
+                    "registration_status",
+                    "approved_by",
+                    "approved_on",
+                    "remarks",
+                ]
+            )
+
+            messages.warning(
+                request,
+                "Backlog registration rejected."
+            )
+
+        return redirect(
+            "coe_backlog_registrations"
+        )
 
     registrations = (
         BacklogRegistration.objects.filter(
@@ -2055,6 +2189,9 @@ def coe_backlog_registrations(request):
         .select_related(
             "student",
             "examination",
+        )
+        .prefetch_related(
+            "subjects__subject",
         )
         .order_by(
             "student__roll_number",

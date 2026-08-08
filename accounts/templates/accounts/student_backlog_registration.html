@@ -67,6 +67,25 @@
 
     {% endif %}
 
+    {% if rejected_registration %}
+
+    <div class="alert alert-warning mt-3">
+
+        <strong>Backlog Registration Rejected</strong>
+
+        <br>
+
+        Reason:
+        {{ rejected_registration.remarks }}
+
+        <br>
+
+        Please correct your subject selection and resubmit.
+
+    </div>
+
+    {% endif %}
+
     {% if failed_subjects %}
 
     <hr>
