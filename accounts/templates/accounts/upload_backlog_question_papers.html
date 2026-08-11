@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Upload Backlog Question Papers</title>
+
+</head>
+
+<body>
+
+<h1>National Examination Management System (NEMS)</h1>
+
+<hr>
+
+<h2>Upload Backlog Question Papers</h2>
+
+<p>
+
+<strong>Examination:</strong>
+{{ assignment.examination }}
+
+</p>
+
+<p>
+
+<strong>Subject:</strong>
+{{ assignment.subject.subject_code }}
+-
+{{ assignment.subject.subject_name }}
+
+</p>
+
+<p>
+
+<strong>Faculty:</strong>
+{{ assignment.faculty }}
+
+</p>
+
+<hr>
+
+{% if message %}
+
+<p>
+
+<strong>{{ message }}</strong>
+
+</p>
+
+{% endif %}
+
+{% if assignment.selected_question_paper_set %}
+
+<p>
+    <strong>
+        Question paper has been selected by the COE.
+        This submission is now locked and cannot be modified.
+    </strong>
+</p>
+
+{% else %}
+
+<form method="post" enctype="multipart/form-data">
+
+    {% csrf_token %}
+
+    <p>
+
+        <strong>Question Paper Set 1 (PDF)</strong>
+
+        <br>
+
+        <input
+            type="file"
+            name="set1"
+            accept=".pdf"
+        >
+
+    </p>
+
+    <hr>
+
+    <p>
+
+        <strong>Question Paper Set 2 (PDF)</strong>
+
+        <br>
+
+        <input
+            type="file"
+            name="set2"
+            accept=".pdf"
+        >
+
+    </p>
+
+    <hr>
+
+    <p>
+
+        <strong>Question Paper Set 3 (PDF)</strong>
+
+        <br>
+
+        <input
+            type="file"
+            name="set3"
+            accept=".pdf"
+        >
+
+    </p>
+
+    <hr>
+
+    <p>
+
+        <strong>Question Paper Evaluation Committee Minutes (PDF)</strong>
+
+        <br>
+
+        <input
+            type="file"
+            name="minutes"
+            accept=".pdf"
+        >
+
+    </p>
+
+    <hr>
+
+    <p>
+
+        <strong>Declaration</strong>
+
+    </p>
+
+    <p>
+
+        I hereby certify that:
+
+    </p>
+
+    <ol>
+
+        <li>
+            The uploaded question papers were prepared while maintaining complete confidentiality.
+        </li>
+
+        <li>
+            After uploading the question papers to NEMS, I have permanently deleted all electronic copies from my computer, email, cloud storage, USB devices and any other storage media under my control.
+        </li>
+
+        <li>
+            I understand that any breach of confidentiality may invite disciplinary action as per Institute rules.
+        </li>
+
+    </ol>
+
+    <p>
+
+        <label>
+
+            <input
+                type="checkbox"
+                name="declaration"
+            >
+
+            I have read and accept the above declaration.
+
+        </label>
+
+    </p>
+
+    <button type="submit">
+
+        Submit Backlog Question Papers
+
+    </button>
+
+</form>
+
+{% endif %}
+
+<hr>
+
+<p>
+
+<a href="/faculty/">
+
+Back to Dashboard
+
+</a>
+
+</p>
+
+</body>
+
+</html>

@@ -32,11 +32,24 @@ urlpatterns = [
         views.faculty_subject_assignment,
         name="faculty_subject_assignment",
     ),
+
+    path(
+        "depm/backlog-faculty-assignment/",
+        views.backlog_faculty_assignment,
+        name="backlog_faculty_assignment",
+    ),
+
     path(
         "faculty/upload-question-papers/<int:assignment_id>/",
         views.upload_question_papers,
         name="upload_question_papers",
     ),
+    path(
+        "faculty/upload-backlog-question-papers/<int:assignment_id>/",
+        views.upload_backlog_question_papers,
+        name="upload_backlog_question_papers",
+    ),
+
     path(
         "coe/",
         views.coe_dashboard,
@@ -52,6 +65,18 @@ urlpatterns = [
         views.generate_question_paper_view,
         name="generate_question_paper",
     ),
+    path(
+        "coe/backlog-question-paper-selection/",
+        views.backlog_question_paper_selection,
+        name="backlog_question_paper_selection",
+    ),
+
+    path(
+        "coe/generate-backlog-question-paper/<int:assignment_id>/",
+        views.generate_backlog_question_paper_view,
+        name="generate_backlog_question_paper",
+    ),
+
     path(
         "faculty/enter-marks/<int:assignment_id>/",
         views.enter_marks,

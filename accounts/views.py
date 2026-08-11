@@ -1,3 +1,4 @@
+import random
 from results.services import (
     calculate_sgpa,
     calculate_cgpa,
@@ -33,11 +34,16 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.shortcuts import render
 from admissions.models import Student
-from registration.models import SemesterRegistration
+from registration.models import (
+    SemesterRegistration,
+    BacklogRegistrationSubject,
+)
 from evaluation.models import (
     Faculty,
     FacultySubjectAssignment,
+    BacklogFacultyAssignment,
     QuestionPaper,
+    BacklogQuestionPaper,
 )
 from academics.models import (
     AcademicYear,
@@ -46,6 +52,7 @@ from academics.models import (
 )
 from evaluation.services import (
     submit_question_papers,
+    submit_backlog_question_papers,
     generate_question_paper,
 )
 from registration.models import SemesterRegistration
@@ -176,6 +183,137 @@ def faculty_subject_assignment(request):
     )
 
 @login_required
+def backlog_faculty_assignment(request):
+
+    message = ""
+
+    examinations = Examination.objects.filter(
+        examination_type__code="BLG",
+        is_active=True,
+    ).order_by("-id")
+
+    selected_examination = None
+
+    subjects = []
+
+    subject_counts = {}
+
+    faculties = Faculty.objects.filter(
+        is_active=True,
+    )
+
+    existing_assignments = {}
+
+    if request.method == "POST":
+
+        examination_id = request.POST.get("examination")
+
+        if examination_id:
+
+            selected_examination = get_object_or_404(
+                Examination,
+                id=examination_id,
+                examination_type__code="BLG",
+                is_active=True,
+            )
+
+            action = request.POST.get("action")
+
+            approved_subject_records = (
+                BacklogRegistrationSubject.objects.filter(
+                    backlog_registration__examination=selected_examination,
+                    backlog_registration__registration_status="APPROVED",
+                )
+                .select_related(
+                    "subject",
+                    "backlog_registration",
+                )
+            )
+
+            subject_map = {}
+            subject_counts = {}
+
+            for record in approved_subject_records:
+
+                subject_map[record.subject.id] = record.subject
+
+                subject_counts[record.subject.id] = (
+                    subject_counts.get(record.subject.id, 0) + 1
+                )
+
+            subjects = sorted(
+                subject_map.values(),
+                key=lambda subject: (
+                    subject.semester,
+                    subject.display_order,
+                ),
+            )
+
+            existing_assignments = {
+                assignment.subject_id: assignment.faculty_id
+                for assignment in BacklogFacultyAssignment.objects.filter(
+                    examination=selected_examination,
+                    is_active=True,
+                )
+            }
+
+            for subject in subjects:
+
+                subject.backlog_student_count = subject_counts.get(
+                    subject.id,
+                    0,
+                )
+
+                subject.assigned_faculty_id = existing_assignments.get(
+                    subject.id
+                )
+
+            if action == "save":
+
+                for subject in subjects:
+
+                    faculty_id = request.POST.get(
+                        f"faculty_{subject.id}"
+                    )
+
+                    if not faculty_id:
+                        continue
+
+                    faculty = get_object_or_404(
+                        Faculty,
+                        id=faculty_id,
+                        is_active=True,
+                    )
+
+                    BacklogFacultyAssignment.objects.update_or_create(
+                        examination=selected_examination,
+                        subject=subject,
+                        defaults={
+                            "curriculum": subject.curriculum,
+                            "faculty": faculty,
+                            "is_active": True,
+                        },
+                    )
+
+                message = (
+                    "Backlog faculty assignments saved successfully."
+                )
+
+    return render(
+        request,
+        "accounts/backlog_faculty_assignment.html",
+        {
+            "examinations": examinations,
+            "selected_examination": selected_examination,
+            "subjects": subjects,
+            "faculties": faculties,
+            "message": message,
+            "subject_counts": subject_counts,
+            "existing_assignments": existing_assignments,
+        },
+    )
+
+@login_required
 def faculty_dashboard(request):
 
     faculty = Faculty.objects.get(
@@ -186,12 +324,21 @@ def faculty_dashboard(request):
         faculty=faculty,
     )
 
+    backlog_assignments = BacklogFacultyAssignment.objects.filter(
+        faculty=faculty,
+        is_active=True,
+    ).select_related(
+        "examination",
+        "subject",
+    )
+
     return render(
         request,
         "accounts/faculty_dashboard.html",
         {
             "faculty": faculty,
             "assignments": assignments,
+            "backlog_assignments": backlog_assignments,
         },
     )
 
@@ -219,6 +366,56 @@ def question_paper_selection(request):
             "assignments": assignments,
             "question_papers": question_papers,
         },
+    )
+
+@login_required
+def backlog_question_paper_selection(request):
+
+    assignments = BacklogFacultyAssignment.objects.filter(
+        submitted_on__isnull=False,
+        is_active=True,
+    ).select_related(
+        "examination",
+        "subject",
+        "faculty",
+    )
+
+    question_papers = BacklogQuestionPaper.objects.all()
+
+    return render(
+        request,
+        "accounts/backlog_question_paper_selection.html",
+        {
+            "assignments": assignments,
+            "question_papers": question_papers,
+        },
+    )
+
+@login_required
+def generate_backlog_question_paper_view(
+    request,
+    assignment_id,
+):
+
+    assignment = BacklogFacultyAssignment.objects.get(
+        id=assignment_id,
+        is_active=True,
+    )
+
+    if not assignment.selected_question_paper_set:
+
+        assignment.selected_question_paper_set = random.choice(
+            [1, 2, 3]
+        )
+
+        assignment.save(
+            update_fields=[
+                "selected_question_paper_set",
+            ]
+        )
+
+    return redirect(
+        "backlog_question_paper_selection",
     )
 
 @login_required
@@ -265,6 +462,58 @@ def upload_question_papers(request, assignment_id):
     return render(
         request,
         "accounts/upload_question_papers.html",
+        {
+            "assignment": assignment,
+            "message": message,
+        },
+    )
+
+@login_required
+def upload_backlog_question_papers(request, assignment_id):
+
+    assignment = get_object_or_404(
+        BacklogFacultyAssignment,
+        id=assignment_id,
+        faculty__user=request.user,
+        is_active=True,
+    )
+
+    message = ""
+
+    if request.method == "POST":
+
+        try:
+
+            submit_backlog_question_papers(
+
+                assignment=assignment,
+
+                set1=request.FILES.get("set1"),
+
+                set2=request.FILES.get("set2"),
+
+                set3=request.FILES.get("set3"),
+
+                minutes=request.FILES.get("minutes"),
+
+                declaration=(
+                    request.POST.get("declaration")
+                    == "on"
+                ),
+            )
+
+            message = (
+                "Confidential Backlog Question Papers "
+                "submitted successfully."
+            )
+
+        except ValueError as e:
+
+            message = str(e)
+
+    return render(
+        request,
+        "accounts/upload_backlog_question_papers.html",
         {
             "assignment": assignment,
             "message": message,

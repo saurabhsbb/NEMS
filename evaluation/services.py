@@ -1,7 +1,9 @@
 import random
 from django.utils import timezone
-from .models import QuestionPaper
-
+from .models import (
+    QuestionPaper,
+    BacklogQuestionPaper,
+)
 
 def submit_question_papers(
     assignment,
@@ -95,3 +97,82 @@ def generate_question_paper(
     assignment.save()
 
     return assignment
+
+def submit_backlog_question_papers(
+    assignment,
+    set1,
+    set2,
+    set3,
+    minutes,
+    declaration,
+):
+    """
+    Submit all confidential backlog question papers.
+    """
+
+    if assignment.selected_question_paper_set:
+        raise ValueError(
+            "Question paper has already been selected by the COE. "
+            "Further uploads or modifications are not allowed."
+        )
+
+    if not set1:
+        raise ValueError(
+            "Please upload Question Paper Set 1."
+        )
+
+    if not set2:
+        raise ValueError(
+            "Please upload Question Paper Set 2."
+        )
+
+    if not set3:
+        raise ValueError(
+            "Please upload Question Paper Set 3."
+        )
+
+    if not minutes:
+        raise ValueError(
+            "Please upload Question Paper Evaluation Committee Minutes."
+        )
+
+    if not declaration:
+        raise ValueError(
+            "Please accept the confidentiality declaration."
+        )
+
+    BacklogQuestionPaper.objects.update_or_create(
+        backlog_faculty_assignment=assignment,
+        question_paper_set=1,
+        defaults={
+            "question_paper_file": set1,
+        },
+    )
+
+    BacklogQuestionPaper.objects.update_or_create(
+        backlog_faculty_assignment=assignment,
+        question_paper_set=2,
+        defaults={
+            "question_paper_file": set2,
+        },
+    )
+
+    BacklogQuestionPaper.objects.update_or_create(
+        backlog_faculty_assignment=assignment,
+        question_paper_set=3,
+        defaults={
+            "question_paper_file": set3,
+        },
+    )
+
+    assignment.question_paper_evaluation_minutes = minutes
+    assignment.question_paper_confidentiality_declaration_accepted = declaration
+    assignment.submitted_on = timezone.now()
+
+    assignment.save(
+        update_fields=[
+            "question_paper_evaluation_minutes",
+            "question_paper_confidentiality_declaration_accepted",
+            "submitted_on",
+        ]
+    )

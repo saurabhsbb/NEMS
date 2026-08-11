@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Backlog Faculty Assignment - NEMS</title>
+</head>
+
+<body>
+
+<h2>Backlog Faculty Assignment</h2>
+
+<hr>
+
+{% if message %}
+
+<div class="alert alert-success">
+
+    {{ message }}
+
+</div>
+
+{% endif %}
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <div class="mb-3">
+
+        <label class="form-label">
+            Backlog Examination
+        </label>
+
+        <select
+            name="examination"
+            class="form-control"
+            required
+        >
+
+            <option value="">
+                Select Backlog Examination
+            </option>
+
+            {% for examination in examinations %}
+
+            <option
+                value="{{ examination.id }}"
+                {% if selected_examination and examination.id == selected_examination.id %}
+                    selected
+                {% endif %}
+            >
+
+                {{ examination }}
+
+            </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+    <button
+        type="submit"
+        name="action"
+        value="load"
+        class="btn btn-primary"
+    >
+
+        Load Backlog Subjects
+
+    </button>
+
+</form>
+
+
+{% if subjects %}
+
+<hr>
+
+<h4>
+    Subjects for {{ selected_examination }}
+</h4>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <input
+        type="hidden"
+        name="examination"
+        value="{{ selected_examination.id }}"
+    >
+
+    <input
+        type="hidden"
+        name="action"
+        value="save"
+    >
+
+    <table class="table table-bordered">
+
+        <thead>
+
+            <tr>
+
+                <th>
+                    Subject Code
+                </th>
+
+                <th>
+                    Subject Name
+                </th>
+
+                <th>
+                    Students Registered
+                </th>
+
+                <th>
+                    Semester
+                </th>
+
+                <th>
+                    Faculty
+                </th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+        {% for subject in subjects %}
+
+            <tr>
+
+                <td>
+                    {{ subject.subject_code }}
+                </td>
+
+                <td>
+                    {{ subject.subject_name }}
+                </td>
+
+                <td>
+                    {{ subject.backlog_student_count }}
+                </td>
+
+                <td>
+                    {{ subject.semester }}
+                </td>
+
+                <td>
+
+                    <select
+                        name="faculty_{{ subject.id }}"
+                        class="form-control"
+                    >
+
+                        <option value="">
+                            Select Faculty
+                        </option>
+
+                        {% for faculty in faculties %}
+
+                        <option
+                            value="{{ faculty.id }}"
+                            {% if subject.assigned_faculty_id == faculty.id %}
+                                selected
+                            {% endif %}
+                        >
+
+                            {{ faculty.employee_id }}
+                            -
+                            {{ faculty.user.get_full_name }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </td>
+
+            </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    <button
+        type="submit"
+        class="btn btn-success"
+    >
+
+        Save Faculty Assignments
+
+    </button>
+
+</form>
+
+{% endif %}
+

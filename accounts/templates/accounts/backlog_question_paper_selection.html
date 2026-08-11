@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Backlog Random Question Paper Selection</title>
+
+</head>
+
+<body>
+
+<h1>National Examination Management System (NEMS)</h1>
+
+<hr>
+
+<h2>Backlog Random Question Paper Selection</h2>
+
+<table border="1" cellpadding="8">
+
+<tr>
+
+<th>Examination</th>
+
+<th>Subject</th>
+
+<th>Faculty</th>
+
+<th>Status</th>
+
+<th>Action</th>
+
+</tr>
+
+{% for assignment in assignments %}
+
+<tr>
+
+<td>
+
+{{ assignment.examination }}
+
+</td>
+
+<td>
+
+{{ assignment.subject.subject_name }}
+
+</td>
+
+<td>
+
+{{ assignment.faculty }}
+
+</td>
+
+<td>
+
+{% if assignment.selected_question_paper_set %}
+
+    Question Paper Generated Successfully
+
+{% else %}
+
+    Ready
+
+{% endif %}
+
+</td>
+
+<td>
+
+{% if assignment.selected_question_paper_set %}
+
+    <strong>
+        Selected Set:
+        {{ assignment.selected_question_paper_set }}
+    </strong>
+
+    <br><br>
+
+    {% for paper in question_papers %}
+
+        {% if paper.backlog_faculty_assignment.id == assignment.id %}
+
+            {% if paper.question_paper_set == assignment.selected_question_paper_set %}
+
+                <a href="{{ paper.question_paper_file.url }}">
+
+                    Download Selected Question Paper
+
+                </a>
+
+                <br><br>
+
+            {% endif %}
+
+        {% endif %}
+
+    {% endfor %}
+
+    {% if assignment.question_paper_evaluation_minutes %}
+
+        <a href="{{ assignment.question_paper_evaluation_minutes.url }}">
+
+            Download Question Paper Evaluation Minutes
+
+        </a>
+
+    {% endif %}
+
+{% else %}
+
+    <a href="/coe/generate-backlog-question-paper/{{ assignment.id }}/">
+
+        Generate Random Question Paper
+
+    </a>
+
+{% endif %}
+
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+
+<td colspan="5">
+
+No backlog subjects are ready.
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+<hr>
+
+<a href="/coe/">
+
+Back to Dashboard
+
+</a>
+
+</body>
+
+</html>

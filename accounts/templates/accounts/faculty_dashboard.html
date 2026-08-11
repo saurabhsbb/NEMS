@@ -59,6 +59,46 @@ Welcome <strong>{{ request.user.first_name }}</strong>
 
 <hr>
 
+<h3>My Backlog Subjects</h3>
+
+<ul>
+
+    {% for assignment in backlog_assignments %}
+
+        <li>
+
+            {{ assignment.examination }}
+            -
+            {{ assignment.subject.subject_name }}
+
+            <a href="/faculty/upload-backlog-question-papers/{{ assignment.id }}/">
+
+                Upload Question Papers
+
+            </a>
+
+        </li>
+
+    {% empty %}
+
+        <li>
+
+            No backlog subjects assigned.
+
+        </li>
+
+    {% endfor %}
+
+</ul>
+
+<hr>
+
+<h3>Faculty Services</h3>
+
+</ul>
+
+<hr>
+
 <h3>Faculty Services</h3>
 
 <ul>
