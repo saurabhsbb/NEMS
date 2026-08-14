@@ -94,6 +94,8 @@ Result Publication
 
             </div>
 
+            {% if not publication or not publication.is_published %}
+
             <div class="col-md-3 d-flex align-items-end">
 
                 <button
@@ -105,6 +107,8 @@ Result Publication
                 </button>
 
             </div>
+
+            {% endif %}
 
         </div>
 
@@ -120,7 +124,7 @@ Result Publication
 
             <th width="30%">
 
-                Published
+                Publication Status
 
             </th>
 
@@ -175,6 +179,154 @@ Result Publication
     </table>
 
     {% endif %}
+
+    <hr>
+
+    <h4>
+
+        Publication History
+
+    </h4>
+
+    <table class="table table-bordered">
+
+        <thead>
+
+            <tr>
+
+                <th>
+
+                    Examination
+
+                </th>
+
+                <th>
+
+                    Semester
+
+                </th>
+
+                <th>
+
+                    Status
+
+                </th>
+
+                <th>
+
+                    Published By
+
+                </th>
+
+                <th>
+
+                    Published On
+
+                </th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            {% for record in publication_records %}
+
+            <tr>
+
+                <td>
+
+                    {{ record.examination.examination_code }}
+
+                </td>
+
+                <td>
+
+                    Semester {{ record.semester }}
+
+                </td>
+
+                <td>
+
+                    {% if record.is_published %}
+
+                        <strong class="text-success">
+
+                            PUBLISHED
+
+                        </strong>
+
+                    {% else %}
+
+                        <span class="text-danger">
+
+                            NOT PUBLISHED
+
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+                <td>
+
+                    {% if record.published_by %}
+
+                        {{ record.published_by }}
+
+                    {% else %}
+
+                        —
+
+                    {% endif %}
+
+                </td>
+
+                <td>
+
+                    {% if record.published_on %}
+
+                        {{ record.published_on|date:"d M Y H:i" }}
+
+                    {% else %}
+
+                        —
+
+                    {% endif %}
+
+                </td>
+
+            </tr>
+
+            {% empty %}
+
+            <tr>
+
+                <td colspan="5" class="text-center">
+
+                    No publication records available.
+
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+<div class="mt-4">
+
+    <a
+        href="{% url 'coe_dashboard' %}"
+        class="btn btn-outline-primary">
+
+        ← Back to Dashboard
+
+    </a>
 
 </div>
 

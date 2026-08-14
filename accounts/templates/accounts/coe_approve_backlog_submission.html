@@ -1,0 +1,63 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block title %}
+Approve Backlog Submission
+{% endblock %}
+
+{% block page_content %}
+
+<h2>Approve Backlog Faculty Submission</h2>
+
+<hr>
+
+<table class="table table-bordered">
+
+    <tr>
+        <th>Examination</th>
+        <td>{{ entry.faculty_assignment.examination }}</td>
+    </tr>
+
+    <tr>
+        <th>Faculty</th>
+        <td>{{ entry.faculty_assignment.faculty }}</td>
+    </tr>
+
+    <tr>
+        <th>Subject</th>
+        <td>{{ entry.subject.subject_code }} -
+            {{ entry.subject.subject_name }}</td>
+    </tr>
+
+</table>
+
+<div class="alert alert-warning">
+
+    <strong>Warning!</strong>
+
+    Once approved, this backlog submission will be available
+    for further result processing.
+
+</div>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <button
+        type="submit"
+        class="btn btn-success">
+
+        Yes, Approve Backlog Submission
+
+    </button>
+
+    <a href="{% url 'coe_verify_backlog_submission' faculty_assignment_id examination_id %}"
+       class="btn btn-secondary">
+
+        Cancel
+
+    </a>
+
+</form>
+
+{% endblock %}

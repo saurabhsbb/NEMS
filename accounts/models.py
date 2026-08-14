@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.exceptions import ValidationError
 
+
 class Role(models.Model):
     role_code = models.CharField(max_length=10, unique=True)
     role_name = models.CharField(max_length=100, unique=True)

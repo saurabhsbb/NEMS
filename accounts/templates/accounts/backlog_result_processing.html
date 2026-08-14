@@ -1,0 +1,108 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block title %}
+
+Backlog Result Processing
+
+{% endblock %}
+
+{% block page_content %}
+
+<h2>Backlog Result Processing</h2>
+
+<hr>
+
+<table class="table table-bordered">
+
+    <thead>
+
+        <tr>
+
+            <th>Examination</th>
+
+            <th>Faculty</th>
+
+            <th>Subject</th>
+
+            <th>Curriculum</th>
+
+            <th>Students</th>
+
+            <th>Status</th>
+
+            <th>Action</th>
+
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+        {% for item in processing_summary %}
+
+        <tr>
+
+            <td>
+                {{ item.examination }}
+            </td>
+
+            <td>
+                {{ item.faculty }}
+            </td>
+
+            <td>
+                {{ item.subject.subject_code }}
+                -
+                {{ item.subject.subject_name }}
+            </td>
+
+            <td>
+                {{ item.academic_year }}
+            </td>
+
+            <td>
+                {{ item.curriculum }}
+            </td>
+
+            <td>
+                {{ item.student_count }}
+            </td>
+
+            <td>
+                {{ item.status }}
+            </td>
+
+            <td>
+
+                <a href="{% url 'process_backlog_result' item.faculty_assignment_id item.examination_id %}"
+                   class="btn btn-primary btn-sm">
+
+                    Process Result
+
+                </a>
+
+            </td>
+
+        </tr>
+
+        {% empty %}
+
+        <tr>
+
+            <td colspan="7"
+                class="text-center">
+
+                No approved backlog submissions
+                available for processing.
+
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% endblock %}

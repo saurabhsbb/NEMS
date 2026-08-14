@@ -83,6 +83,12 @@ urlpatterns = [
         name="enter_marks",
     ),
     path(
+        "faculty/backlog-enter-marks/<int:assignment_id>/",
+        views.backlog_enter_marks,
+        name="backlog_enter_marks",
+    ),
+
+    path(
         "logout/",
         views.logout_view,
         name="logout",
@@ -109,6 +115,12 @@ urlpatterns = [
         name="coe_return_submission",
     ),
     path(
+        "coe/backlog-result-processing/",
+        views.backlog_result_processing,
+        name="backlog_result_processing",
+    ),
+
+    path(
         "coe/result-processing/",
         views.result_processing,
         name="result_processing",
@@ -117,6 +129,11 @@ urlpatterns = [
         "coe/process-result/<int:faculty_assignment_id>/<int:examination_id>/",
         views.process_result,
         name="process_result",
+    ),
+    path(
+        "coe/process-backlog-result/<int:faculty_assignment_id>/<int:examination_id>/",
+        views.process_backlog_result,
+        name="process_backlog_result",
     ),
     path(
         "semester-result-processing/",
@@ -195,5 +212,21 @@ urlpatterns = [
         views.coe_backlog_registrations,
         name="coe_backlog_registrations",
     ),
+    path(
+        "coe/backlog-verify-submission/<int:faculty_assignment_id>/<int:examination_id>/",
+        views.coe_verify_backlog_submission,
+        name="coe_verify_backlog_submission",
+    ),
 
+    path(
+        "coe/backlog-approve-submission/<int:faculty_assignment_id>/<int:examination_id>/",
+        views.coe_approve_backlog_submission,
+        name="coe_approve_backlog_submission",
+    ),
+
+    path(
+        "coe/backlog-return-submission/<int:faculty_assignment_id>/<int:examination_id>/",
+        views.coe_return_backlog_submission,
+        name="coe_return_backlog_submission",
+    ),
 ]

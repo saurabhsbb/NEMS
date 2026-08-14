@@ -1,0 +1,98 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block title %}
+Verify Backlog Submission
+{% endblock %}
+
+{% block page_content %}
+
+<h2>Verify Backlog Faculty Submission</h2>
+
+<hr>
+
+<p>
+    <strong>Examination:</strong>
+    {{ entry.faculty_assignment.examination }}
+</p>
+
+<p>
+    <strong>Faculty:</strong>
+    {{ entry.faculty_assignment.faculty }}
+</p>
+
+<p>
+    <strong>Subject:</strong>
+    {{ entry.subject.subject_code }} -
+    {{ entry.subject.subject_name }}
+</p>
+
+<hr>
+
+<table class="table table-bordered table-striped">
+
+    <thead>
+        <tr>
+            <th>Student</th>
+            <th>Class Test</th>
+            <th>Attendance & Assignment</th>
+            <th>Theory External</th>
+            <th>Practical Internal</th>
+            <th>Practical External</th>
+            <th>Total</th>
+            <th>Grade</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+    {% for result in entries %}
+
+        <tr>
+
+            <td>
+                {{ result.backlog_registration_subject.backlog_registration.student.roll_number }}
+            </td>
+
+            <td>{{ result.class_test_marks|default:"-" }}</td>
+
+            <td>{{ result.attendance_assignment_marks|default:"-" }}</td>
+
+            <td>{{ result.theory_external_marks|default:"-" }}</td>
+
+            <td>{{ result.practical_internal_marks|default:"-" }}</td>
+
+            <td>{{ result.practical_external_marks|default:"-" }}</td>
+
+            <td>{{ result.total_marks|default:"-" }}</td>
+
+            <td>{{ result.grade|default:"-" }}</td>
+
+            <td>{{ result.workflow_status }}</td>
+
+        </tr>
+
+    {% endfor %}
+
+    </tbody>
+
+</table>
+
+<hr>
+
+<a href="{% url 'coe_approve_backlog_submission' faculty_assignment_id examination_id %}"
+   class="btn btn-success">
+    Approve Submission
+</a>
+
+<a href="{% url 'coe_return_backlog_submission' faculty_assignment_id examination_id %}"
+   class="btn btn-warning">
+    Return Submission
+</a>
+
+<a href="{% url 'coe_marks_verification' %}"
+   class="btn btn-secondary">
+    Back
+</a>
+
+{% endblock %}

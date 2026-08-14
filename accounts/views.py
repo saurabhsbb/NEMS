@@ -1,8 +1,12 @@
 import random
+from decimal import Decimal
 from results.services import (
     calculate_sgpa,
     calculate_cgpa,
     get_backlog_subjects,
+    get_live_attempt_number,
+    calculate_backlog_result,
+    get_effective_results,
 )
 from academics.models import Subject
 from openpyxl import load_workbook
@@ -10,6 +14,7 @@ from django.http import HttpResponse
 from results.models import (
     ResultEntry,
     StudentAcademicResult,
+    BacklogResultEntry,
     SemesterResult,
     CombinedResult,
     ResultPublication,
@@ -872,9 +877,530 @@ def enter_marks(request, assignment_id):
     )
 
 @login_required
+def backlog_enter_marks(request, assignment_id):
+
+    assignment = get_object_or_404(
+        BacklogFacultyAssignment,
+        id=assignment_id,
+        faculty__user=request.user,
+        is_active=True,
+    )
+
+    # Examination comes directly from the faculty assignment.
+    # Faculty should NOT select another examination.
+    selected_examination = assignment.examination
+
+    subject = assignment.subject
+    subject_type = subject.subject_type
+
+    # ---------------------------------------------------------
+    # Determine the currently active assessment window
+    # ---------------------------------------------------------
+
+    active_window = (
+        AssessmentWindow.objects.filter(
+            examination=selected_examination,
+            start_date__lte=timezone.localdate(),
+            end_date__gte=timezone.localdate(),
+        )
+        .order_by("start_date", "id")
+        .first()
+    )
+
+    # ---------------------------------------------------------
+    # Approved backlog students for this subject
+    # ---------------------------------------------------------
+
+    registrations = (
+        BacklogRegistrationSubject.objects.filter(
+            backlog_registration__examination=selected_examination,
+            backlog_registration__registration_status="APPROVED",
+            subject=subject,
+        )
+        .select_related(
+            "backlog_registration__student",
+            "subject",
+        )
+    )
+
+    # ---------------------------------------------------------
+    # Existing backlog result entries
+    # ---------------------------------------------------------
+
+    existing_results = BacklogResultEntry.objects.filter(
+        backlog_registration_subject__in=registrations,
+        subject=subject,
+    )
+
+    result_map = {
+        result.backlog_registration_subject_id: result
+        for result in existing_results
+    }
+
+    for registration_subject in registrations:
+
+        registration_subject.result_entry = result_map.get(
+            registration_subject.id
+        )
+
+        registration_subject.is_locked = (
+            registration_subject.result_entry is not None
+            and registration_subject.result_entry.workflow_status
+            in [
+                "SUBMITTED",
+                "APPROVED",
+            ]
+        )
+
+        registration_subject.class_test_marks = ""
+        registration_subject.attendance_assignment_marks = ""
+        registration_subject.theory_external_marks = ""
+        registration_subject.practical_internal_marks = ""
+        registration_subject.practical_external_marks = ""
+
+        registration_subject.total_marks = ""
+        registration_subject.percentage = ""
+        registration_subject.grade = ""
+        registration_subject.result_status = ""
+
+        if registration_subject.result_entry:
+
+            entry = registration_subject.result_entry
+
+            registration_subject.class_test_marks = (
+                entry.class_test_marks
+            )
+
+            registration_subject.attendance_assignment_marks = (
+                entry.attendance_assignment_marks
+            )
+
+            registration_subject.theory_external_marks = (
+                entry.theory_external_marks
+            )
+
+            registration_subject.practical_internal_marks = (
+                entry.practical_internal_marks
+            )
+
+            registration_subject.practical_external_marks = (
+                entry.practical_external_marks
+            )
+
+            registration_subject.total_marks = (
+                entry.total_marks
+            )
+
+            registration_subject.percentage = (
+                entry.percentage
+            )
+
+            registration_subject.grade = (
+                entry.grade
+            )
+
+            registration_subject.result_status = (
+                entry.result_status
+            )
+
+    # ---------------------------------------------------------
+    # Determine which component is currently editable
+    # ---------------------------------------------------------
+
+    editable_class_test = False
+    editable_attendance_assignment = False
+    editable_end_semester = False
+
+    if active_window:
+
+        if active_window.assessment_type == "CLASS_TEST":
+
+            if subject_type in [
+                "THEORY",
+                "THEORY_PRACTICAL",
+            ]:
+                editable_class_test = True
+
+        elif (
+            active_window.assessment_type
+            == "ATTENDANCE_ASSIGNMENT"
+        ):
+
+            if subject_type in [
+                "THEORY",
+                "THEORY_PRACTICAL",
+            ]:
+                editable_attendance_assignment = True
+
+        elif active_window.assessment_type == "END_SEMESTER":
+
+            if subject_type in [
+                "THEORY",
+                "PRACTICAL",
+                "THEORY_PRACTICAL",
+            ]:
+                editable_end_semester = True
+
+    # ---------------------------------------------------------
+    # POST
+    # ---------------------------------------------------------
+
+    if request.method == "POST":
+
+        action = request.POST.get("action")
+
+        # No active window = nothing can be edited.
+        if not active_window:
+
+            messages.error(
+                request,
+                "There is no active assessment window. "
+                "Marks cannot be entered or modified.",
+            )
+
+            return redirect(request.path)
+
+        for registration_subject in registrations:
+
+            entry, created = (
+                BacklogResultEntry.objects.get_or_create(
+                    backlog_registration_subject=registration_subject,
+                    defaults={
+                        "subject": subject,
+                        "faculty_assignment": assignment,
+                    },
+                )
+            )
+
+            # Submitted/approved records are permanently locked
+            # for faculty editing.
+            if entry.workflow_status in [
+                "SUBMITTED",
+                "APPROVED",
+            ]:
+                continue
+
+            student_roll = (
+                registration_subject
+                .backlog_registration
+                .student
+                .roll_number
+            )
+
+            # =================================================
+            # CLASS TEST
+            # =================================================
+
+            if editable_class_test:
+
+                marks = request.POST.get(
+                    f"class_test_{registration_subject.id}"
+                )
+
+                if marks not in [None, ""]:
+
+                    try:
+                        marks = float(marks)
+                    except ValueError:
+
+                        messages.error(
+                            request,
+                            f"Invalid Class Test marks "
+                            f"for {student_roll}.",
+                        )
+
+                        return redirect(request.path)
+
+                    if marks < 0:
+
+                        messages.error(
+                            request,
+                            f"Class Test marks cannot be negative "
+                            f"for {student_roll}.",
+                        )
+
+                        return redirect(request.path)
+
+                    if marks > subject.class_test_max:
+
+                        messages.error(
+                            request,
+                            f"Class Test marks cannot exceed "
+                            f"{subject.class_test_max} "
+                            f"for {student_roll}.",
+                        )
+
+                        return redirect(request.path)
+
+                    entry.class_test_marks = marks
+
+            # =================================================
+            # ATTENDANCE & ASSIGNMENT
+            # =================================================
+
+            elif editable_attendance_assignment:
+
+                marks = request.POST.get(
+                    f"attendance_assignment_{registration_subject.id}"
+                )
+
+                if marks not in [None, ""]:
+
+                    try:
+                        marks = float(marks)
+                    except ValueError:
+
+                        messages.error(
+                            request,
+                            f"Invalid Attendance & Assignment marks "
+                            f"for {student_roll}.",
+                        )
+
+                        return redirect(request.path)
+
+                    if marks < 0:
+
+                        messages.error(
+                            request,
+                            f"Attendance & Assignment marks cannot "
+                            f"be negative for {student_roll}.",
+                        )
+
+                        return redirect(request.path)
+
+                    if (
+                        marks
+                        > subject.attendance_assignment_max
+                    ):
+
+                        messages.error(
+                            request,
+                            f"Attendance & Assignment marks cannot "
+                            f"exceed "
+                            f"{subject.attendance_assignment_max} "
+                            f"for {student_roll}.",
+                        )
+
+                        return redirect(request.path)
+
+                    entry.attendance_assignment_marks = marks
+
+            # =================================================
+            # END SEMESTER
+            # =================================================
+
+            elif editable_end_semester:
+
+                # ---------------------------------------------
+                # Theory External
+                # ---------------------------------------------
+
+                if subject_type in [
+                    "THEORY",
+                    "THEORY_PRACTICAL",
+                ]:
+
+                    marks = request.POST.get(
+                        f"theory_external_{registration_subject.id}"
+                    )
+
+                    if marks not in [None, ""]:
+
+                        try:
+                            marks = float(marks)
+                        except ValueError:
+
+                            messages.error(
+                                request,
+                                f"Invalid Theory External marks "
+                                f"for {student_roll}.",
+                            )
+
+                            return redirect(request.path)
+
+                        if marks < 0:
+
+                            messages.error(
+                                request,
+                                f"Theory External marks cannot be "
+                                f"negative for {student_roll}.",
+                            )
+
+                            return redirect(request.path)
+
+                        if marks > subject.theory_external_max:
+
+                            messages.error(
+                                request,
+                                f"Theory External marks cannot exceed "
+                                f"{subject.theory_external_max} "
+                                f"for {student_roll}.",
+                            )
+
+                            return redirect(request.path)
+
+                        entry.theory_external_marks = marks
+
+                # ---------------------------------------------
+                # Practical Internal
+                # ---------------------------------------------
+
+                if subject_type in [
+                    "PRACTICAL",
+                    "THEORY_PRACTICAL",
+                ]:
+
+                    marks = request.POST.get(
+                        f"practical_internal_{registration_subject.id}"
+                    )
+
+                    if marks not in [None, ""]:
+
+                        try:
+                            marks = float(marks)
+                        except ValueError:
+
+                            messages.error(
+                                request,
+                                f"Invalid Practical Internal marks "
+                                f"for {student_roll}.",
+                            )
+
+                            return redirect(request.path)
+
+                        if marks < 0:
+
+                            messages.error(
+                                request,
+                                f"Practical Internal marks cannot be "
+                                f"negative for {student_roll}.",
+                            )
+
+                            return redirect(request.path)
+
+                        if (
+                            marks
+                            > subject.practical_internal_max
+                        ):
+
+                            messages.error(
+                                request,
+                                f"Practical Internal marks cannot exceed "
+                                f"{subject.practical_internal_max} "
+                                f"for {student_roll}.",
+                            )
+
+                            return redirect(request.path)
+
+                        entry.practical_internal_marks = marks
+
+                    # -----------------------------------------
+                    # Practical External
+                    # -----------------------------------------
+
+                    marks = request.POST.get(
+                        f"practical_external_{registration_subject.id}"
+                    )
+
+                    if marks not in [None, ""]:
+
+                        try:
+                            marks = float(marks)
+                        except ValueError:
+
+                            messages.error(
+                                request,
+                                f"Invalid Practical External marks "
+                                f"for {student_roll}.",
+                            )
+
+                            return redirect(request.path)
+
+                        if marks < 0:
+
+                            messages.error(
+                                request,
+                                f"Practical External marks cannot be "
+                                f"negative for {student_roll}.",
+                            )
+
+                            return redirect(request.path)
+
+                        if (
+                            marks
+                            > subject.practical_external_max
+                        ):
+
+                            messages.error(
+                                request,
+                                f"Practical External marks cannot exceed "
+                                f"{subject.practical_external_max} "
+                                f"for {student_roll}.",
+                            )
+
+                            return redirect(request.path)
+
+                        entry.practical_external_marks = marks
+
+            entry.save()
+
+        # -----------------------------------------------------
+        # SUBMIT
+        # -----------------------------------------------------
+
+        if action == "submit":
+
+            BacklogResultEntry.objects.filter(
+                backlog_registration_subject__in=registrations,
+                subject=subject,
+                workflow_status__in=[
+                    "DRAFT",
+                    "RETURNED",
+                ],
+            ).update(
+                workflow_status="SUBMITTED",
+                submitted_at=timezone.now(),
+            )
+
+            messages.success(
+                request,
+                "Backlog marks submitted successfully.",
+            )
+
+        else:
+
+            messages.success(
+                request,
+                "Backlog marks saved successfully.",
+            )
+
+        return redirect(request.path)
+
+    return render(
+        request,
+        "accounts/backlog_enter_marks.html",
+        {
+            "assignment": assignment,
+            "registrations": registrations,
+            "selected_examination": selected_examination,
+            "active_window": active_window,
+            "editable_class_test": editable_class_test,
+            "editable_attendance_assignment":
+                editable_attendance_assignment,
+            "editable_end_semester": editable_end_semester,
+        },
+    )
+
+@login_required
 def coe_marks_verification(request):
 
-    submitted_assignments = (
+    submission_summary = []
+
+    # =========================================================
+    # REGULAR FACULTY SUBMISSIONS
+    # =========================================================
+
+    regular_entries = (
         ResultEntry.objects.filter(
             workflow_status="SUBMITTED",
         )
@@ -887,41 +1413,122 @@ def coe_marks_verification(request):
         )
     )
 
-    submission_summary = []
-    submission_map = {}
+    regular_map = {}
 
-    for entry in submitted_assignments:
+    for entry in regular_entries:
 
         key = (
             entry.faculty_assignment.id,
             entry.examination_registration.examination.id,
         )
 
-        if key not in submission_map:
+        if key not in regular_map:
 
-            submission_map[key] = {
-                "faculty_assignment_id": entry.faculty_assignment.id,
-                "examination_id": entry.examination_registration.examination.id,
+            regular_map[key] = {
+                "submission_type": "REGULAR",
 
-                "faculty": entry.faculty_assignment.faculty,
-                "subject": entry.faculty_assignment.subject,
-                "academic_year": entry.faculty_assignment.academic_year,
-                "curriculum": entry.faculty_assignment.curriculum,
-                "examination": entry.examination_registration.examination,
+                "faculty_assignment_id":
+                    entry.faculty_assignment.id,
+
+                "examination_id":
+                    entry.examination_registration.examination.id,
+
+                "faculty":
+                    entry.faculty_assignment.faculty,
+
+                "subject":
+                    entry.faculty_assignment.subject,
+
+                "academic_year":
+                    entry.faculty_assignment.academic_year,
+
+                "curriculum":
+                    entry.faculty_assignment.curriculum,
+
+                "examination":
+                    entry.examination_registration.examination,
 
                 "student_count": 0,
-                "status": entry.workflow_status,
+
+                "status":
+                    entry.workflow_status,
             }
 
-        submission_map[key]["student_count"] += 1
+        regular_map[key]["student_count"] += 1
 
-    submission_summary = list(submission_map.values())
+    submission_summary.extend(
+        regular_map.values()
+    )
+
+    # =========================================================
+    # BACKLOG FACULTY SUBMISSIONS
+    # =========================================================
+
+    backlog_entries = (
+        BacklogResultEntry.objects.filter(
+            workflow_status="SUBMITTED",
+        )
+        .select_related(
+            "faculty_assignment__faculty__user",
+            "faculty_assignment__curriculum",
+            "faculty_assignment__subject",
+            "faculty_assignment__examination",
+            "backlog_registration_subject__backlog_registration__student",
+        )
+    )
+
+    backlog_map = {}
+
+    for entry in backlog_entries:
+
+        key = (
+            entry.faculty_assignment.id,
+            entry.faculty_assignment.examination.id,
+        )
+
+        if key not in backlog_map:
+
+            backlog_map[key] = {
+                "submission_type": "BACKLOG",
+
+                "faculty_assignment_id":
+                    entry.faculty_assignment.id,
+
+                "examination_id":
+                    entry.faculty_assignment.examination.id,
+
+                "faculty":
+                    entry.faculty_assignment.faculty,
+
+                "subject":
+                    entry.faculty_assignment.subject,
+
+                "academic_year": None,
+
+                "curriculum":
+                    entry.faculty_assignment.curriculum,
+
+                "examination":
+                    entry.faculty_assignment.examination,
+
+                "student_count": 0,
+
+                "status":
+                    entry.workflow_status,
+            }
+
+        backlog_map[key]["student_count"] += 1
+
+    submission_summary.extend(
+        backlog_map.values()
+    )
 
     return render(
         request,
         "accounts/coe_marks_verification.html",
         {
-            "submitted_assignments": submission_summary,
+            "submitted_assignments":
+                submission_summary,
         },
     )
 
@@ -1029,6 +1636,129 @@ def coe_return_submission(
     )
 
 @login_required
+def coe_verify_backlog_submission(
+    request,
+    faculty_assignment_id,
+    examination_id,
+):
+
+    entries = BacklogResultEntry.objects.filter(
+        faculty_assignment_id=faculty_assignment_id,
+        backlog_registration_subject__backlog_registration__examination_id=examination_id,
+    ).select_related(
+        "backlog_registration_subject__backlog_registration__student",
+        "subject",
+        "faculty_assignment__faculty",
+        "faculty_assignment__curriculum",
+        "faculty_assignment__examination",
+    )
+
+    entry = entries.first()
+
+    if not entry:
+        return HttpResponse(
+            "No submitted backlog records found."
+        )
+
+    return render(
+        request,
+        "accounts/coe_verify_backlog_submission.html",
+        {
+            "entry": entry,
+            "entries": entries,
+            "faculty_assignment_id": faculty_assignment_id,
+            "examination_id": examination_id,
+        },
+    )
+
+@login_required
+def coe_approve_backlog_submission(
+    request,
+    faculty_assignment_id,
+    examination_id,
+):
+
+    entries = BacklogResultEntry.objects.filter(
+        faculty_assignment_id=faculty_assignment_id,
+        backlog_registration_subject__backlog_registration__examination_id=examination_id,
+    )
+
+    entry = entries.first()
+
+    if not entry:
+        return HttpResponse(
+            "Backlog submission not found."
+        )
+
+    if request.method == "POST":
+
+        entries.update(
+            workflow_status="APPROVED",
+            approved_at=timezone.now(),
+        )
+        
+        return redirect(
+            "coe_marks_verification"
+        )
+
+    return render(
+        request,
+        "accounts/coe_approve_backlog_submission.html",
+        {
+            "entry": entry,
+            "entries": entries,
+            "faculty_assignment_id": faculty_assignment_id,
+            "examination_id": examination_id,
+        },
+    )
+
+@login_required
+def coe_return_backlog_submission(
+    request,
+    faculty_assignment_id,
+    examination_id,
+):
+
+    entries = BacklogResultEntry.objects.filter(
+        faculty_assignment_id=faculty_assignment_id,
+        backlog_registration_subject__backlog_registration__examination_id=examination_id,
+    )
+
+    entry = entries.first()
+
+    if request.method == "POST":
+
+        remarks = request.POST.get(
+            "remarks",
+            "",
+        )
+
+        entries.update(
+            workflow_status="RETURNED",
+            workflow_remarks=remarks,
+        )
+
+        return redirect(
+            "coe_marks_verification"
+        )
+
+    if not entry:
+        return HttpResponse(
+            "Backlog submission not found."
+        )
+
+    return render(
+        request,
+        "accounts/coe_return_backlog_submission.html",
+        {
+            "entry": entry,
+            "entries": entries,
+            "faculty_assignment_id": faculty_assignment_id,
+            "examination_id": examination_id,
+        },
+    )
+
+@login_required
 def result_processing(request):
 
     approved_assignments = (
@@ -1079,6 +1809,202 @@ def result_processing(request):
         "accounts/result_processing.html",
         {
             "processing_summary": processing_summary,
+        },
+    )
+
+@login_required
+def backlog_result_processing(request):
+
+    approved_assignments = (
+        BacklogResultEntry.objects.filter(
+            workflow_status="APPROVED",
+        )
+        .select_related(
+            "faculty_assignment__faculty__user",
+            "faculty_assignment__subject",
+            "faculty_assignment__curriculum",
+            "faculty_assignment__examination",
+        )
+    )
+
+    processing_summary = []
+
+    processing_map = {}
+
+    for entry in approved_assignments:
+
+        key = (
+            entry.faculty_assignment.id,
+            entry.faculty_assignment.examination.id,
+        )
+
+        if key not in processing_map:
+
+            processing_map[key] = {
+                "faculty_assignment_id":
+                    entry.faculty_assignment.id,
+
+                "examination_id":
+                    entry.faculty_assignment.examination.id,
+
+                "faculty":
+                    entry.faculty_assignment.faculty,
+
+                "subject":
+                    entry.faculty_assignment.subject,
+
+                "curriculum":
+                    entry.faculty_assignment.curriculum,
+
+                "examination":
+                    entry.faculty_assignment.examination,
+
+                "student_count":
+                    0,
+
+                "status":
+                    entry.workflow_status,
+            }
+
+        processing_map[key]["student_count"] += 1
+
+    processing_summary = list(
+        processing_map.values()
+    )
+
+    return render(
+        request,
+        "accounts/backlog_result_processing.html",
+        {
+            "processing_summary":
+                processing_summary,
+        },
+    )
+
+@login_required
+def process_backlog_result(
+    request,
+    faculty_assignment_id,
+    examination_id,
+):
+
+    entries = BacklogResultEntry.objects.filter(
+        faculty_assignment_id=faculty_assignment_id,
+        backlog_registration_subject__backlog_registration__examination_id=examination_id,
+    ).select_related(
+        "subject",
+        "backlog_registration_subject__backlog_registration__student",
+        "backlog_registration_subject__backlog_registration__examination",
+    )
+
+    entry = entries.first()
+
+    if not entry:
+        return HttpResponse(
+            "Backlog Result not found."
+        )
+
+    if request.method == "POST":
+
+        for entry in entries:
+
+            calculate_backlog_result(entry)
+
+            entry.save(
+                update_fields=[
+                    "total_marks",
+                    "percentage",
+                    "grade",
+                    "grade_point",
+                    "result_status",
+                ]
+            )
+
+            student = (
+                entry.backlog_registration_subject
+                .backlog_registration
+                .student
+            )
+
+            examination = (
+                entry.backlog_registration_subject
+                .backlog_registration
+                .examination
+            )
+
+            attempt_number = get_live_attempt_number(
+                student=student,
+                subject=entry.subject,
+                examination=examination,
+            )
+
+            StudentAcademicResult.objects.update_or_create(
+
+                student=student,
+
+                examination=examination,
+
+                subject=entry.subject,
+
+                defaults={
+
+                    "attempt_number":
+                        attempt_number,
+
+                    "class_test_marks":
+                        entry.class_test_marks,
+
+                    "attendance_assignment_marks":
+                        entry.attendance_assignment_marks,
+
+                    "theory_external_marks":
+                        entry.theory_external_marks,
+
+                    "practical_internal_marks":
+                        entry.practical_internal_marks,
+
+                    "practical_external_marks":
+                        entry.practical_external_marks,
+
+                    "total_marks":
+                        entry.total_marks,
+
+                    "percentage":
+                        entry.percentage,
+
+                    "grade":
+                        entry.grade,
+
+                    "grade_point":
+                        entry.grade_point,
+
+                    "result_status":
+                        entry.result_status,
+
+                    "source":
+                        "LIVE",
+                },
+            )
+
+        messages.success(
+            request,
+            "Backlog result processed successfully."
+        )
+
+        return redirect(
+            "backlog_result_processing"
+        )
+
+    return render(
+        request,
+        "accounts/process_backlog_result.html",
+        {
+            "entry": entry,
+            "entries": entries,
+            "faculty_assignment_id":
+                faculty_assignment_id,
+            "examination_id":
+                examination_id,
         },
     )
 
@@ -1221,6 +2147,12 @@ def process_result(
                 ]
             )
 
+            attempt_number = get_live_attempt_number(
+                student=entry.examination_registration.student,
+                subject=entry.subject,
+                examination=entry.examination_registration.examination,
+            )
+
             StudentAcademicResult.objects.update_or_create(
 
                 student=entry.examination_registration.student,
@@ -1231,7 +2163,11 @@ def process_result(
 
                 defaults={
 
-                    "class_test_marks": entry.class_test_marks,
+                    "attempt_number":
+                        attempt_number,
+
+                    "class_test_marks":
+                        entry.class_test_marks,
 
                     "attendance_assignment_marks":
                         entry.attendance_assignment_marks,
@@ -1786,20 +2722,56 @@ def semester_grade_sheet(
         id=examination_id
     )
 
-    results = (
-        StudentAcademicResult.objects.filter(
-            student=student,
-            examination=examination,
-            subject__semester=semester,
+    # =========================================================
+    # RESULT PUBLICATION CHECK
+    # =========================================================
+
+    publication = ResultPublication.objects.filter(
+        examination=examination,
+        semester=semester,
+        is_published=True,
+    ).first()
+
+    if publication is None:
+
+        messages.error(
+            request,
+            "Semester Grade Sheet is not available."
         )
-        .select_related("subject")
-        .order_by("subject__subject_code")
-    )
+
+        return redirect(
+            "student_results"
+        )
+
+    # =========================================================
+    # OFFICIAL SEMESTER RESULT
+    # =========================================================
 
     semester_result = SemesterResult.objects.get(
         student=student,
         examination=examination,
         semester=semester,
+    )
+
+    # =========================================================
+    # SUBJECT RESULTS
+    # =========================================================
+    #
+    # IMPORTANT:
+    # Do NOT use get_effective_results() here.
+    #
+    # We need the result corresponding to the
+    # published examination.
+    #
+
+    results = StudentAcademicResult.objects.filter(
+        student=student,
+        examination=examination,
+        subject__semester=semester,
+    ).select_related(
+        "subject",
+    ).order_by(
+        "subject__subject_code",
     )
 
     return render(
@@ -1829,27 +2801,191 @@ def combined_grade_sheet(
         id=examination_id
     )
 
-    semester_results = (
-        SemesterResult.objects.filter(
-            student=student,
-        ).order_by("semester")
-    )
-
     combined_result = CombinedResult.objects.get(
         student=student,
         examination=examination,
     )
 
-    subject_results = (
-        StudentAcademicResult.objects.filter(
-            student=student,
+    # =========================================================
+    # PUBLISHED SUBJECT RESULTS
+    # =========================================================
+
+    published_examinations = {}
+
+    publications = (
+        ResultPublication.objects.filter(
+            examination__semester_results__student=student,
+            is_published=True,
         )
-        .select_related("subject")
+        .select_related(
+            "examination",
+        )
         .order_by(
-            "subject__semester",
-            "subject__subject_code",
+            "semester",
+            "-published_on",
+            "-id",
         )
     )
+
+    for publication in publications:
+
+        semester = publication.semester
+
+        if semester not in published_examinations:
+
+            published_examinations[semester] = (
+                publication.examination
+            )
+
+    subject_results = []
+
+    for semester, published_examination in (
+        published_examinations.items()
+    ):
+
+        semester_results = (
+            StudentAcademicResult.objects.filter(
+                student=student,
+                examination=published_examination,
+                subject__semester=semester,
+            )
+            .select_related(
+                "subject",
+            )
+            .order_by(
+                "subject__subject_code",
+            )
+        )
+
+        subject_results.extend(
+            semester_results
+        )
+
+    subject_results = sorted(
+        subject_results,
+        key=lambda result: (
+            result.subject.semester,
+            result.subject.subject_code,
+        ),
+    )
+
+    # =========================================================
+# CALCULATE DISPLAYED CGPA FROM PUBLISHED RESULTS
+# =========================================================
+
+    displayed_registered_credits = Decimal("0")
+
+    displayed_earned_credits = Decimal("0")
+
+    displayed_weighted_grade_points = Decimal("0")
+
+    displayed_result_status = "PASS"
+
+    for result in subject_results:
+
+        credits = result.subject.credits
+
+        displayed_registered_credits += credits
+
+        displayed_weighted_grade_points += (
+            credits * result.grade_point
+        )
+
+        if result.result_status == "PASS":
+
+            displayed_earned_credits += credits
+
+        else:
+
+            displayed_result_status = "FAIL"
+
+    if displayed_registered_credits > 0:
+
+        displayed_cgpa = (
+            displayed_weighted_grade_points
+            / displayed_registered_credits
+        ).quantize(
+            Decimal("0.01")
+        )
+
+    else:
+
+        displayed_cgpa = Decimal("0.00")
+
+    # =========================================================
+    # BUILD SEMESTER-WISE SUMMARY
+    # =========================================================
+
+    semester_data = {}
+
+    for result in subject_results:
+
+        semester = result.subject.semester
+        credits = result.subject.credits
+
+        if semester not in semester_data:
+
+            semester_data[semester] = {
+                "semester": semester,
+                "registered_credits": 0,
+                "earned_credits": 0,
+                "weighted_grade_points": 0,
+                "result_status": "PASS",
+            }
+
+        semester_data[semester]["registered_credits"] += (
+            credits
+        )
+
+        semester_data[semester]["weighted_grade_points"] += (
+            credits * result.grade_point
+        )
+
+        if result.result_status == "PASS":
+
+            semester_data[semester]["earned_credits"] += (
+                credits
+            )
+
+        else:
+
+            semester_data[semester]["result_status"] = "FAIL"
+
+    semester_results = []
+
+    for semester in sorted(semester_data):
+
+        data = semester_data[semester]
+
+        registered_credits = data[
+            "registered_credits"
+        ]
+
+        if registered_credits > 0:
+
+            sgpa = (
+                data["weighted_grade_points"]
+                / registered_credits
+            ).quantize(
+                Decimal("0.01")
+            )
+
+        else:
+
+            sgpa = Decimal("0.00")
+
+        semester_results.append(
+            {
+                "semester": semester,
+                "registered_credits":
+                    registered_credits,
+                "earned_credits":
+                    data["earned_credits"],
+                "sgpa": sgpa,
+                "result_status":
+                    data["result_status"],
+            }
+        )
 
     return render(
         request,
@@ -1860,6 +2996,9 @@ def combined_grade_sheet(
             "semester_results": semester_results,
             "combined_result": combined_result,
             "subject_results": subject_results,
+            "displayed_cgpa": displayed_cgpa,
+            "displayed_result_status": displayed_result_status,
+
         },
     )
 
@@ -1968,12 +3107,25 @@ def result_publication(request):
             semester=selected_semester,
         ).first()
 
+    publication_records = (
+        ResultPublication.objects
+        .select_related(
+            "examination",
+            "published_by",
+        )
+        .order_by(
+            "-examination__id",
+            "semester",
+        )
+    )
+
     return render(
         request,
         "accounts/result_publication.html",
         {
             "examinations": examinations,
             "publication": publication,
+            "publication_records": publication_records,
             "selected_examination": selected_examination,
             "selected_semester": selected_semester,
         },
@@ -1986,38 +3138,59 @@ def student_results(request):
         user=request.user
     )
 
-    semester_results = SemesterResult.objects.filter(
-        student=student,
-    ).select_related(
-        "examination",
-    ).order_by(
-        "semester",
+    publications = (
+        ResultPublication.objects.filter(
+            examination__semester_results__student=student,
+            is_published=True,
+        )
+        .select_related(
+            "examination",
+        )
+        .order_by(
+            "semester",
+            "-published_on",
+            "-id",
+        )
     )
 
     published_results = []
 
-    for result in semester_results:
+    published_semesters = set()
 
-        publication = ResultPublication.objects.filter(
-            examination=result.examination,
-            semester=result.semester,
-            is_published=True,
+    for publication in publications:
+
+        semester = publication.semester
+
+        # Only the latest published examination
+        # for each semester is displayed.
+        if semester in published_semesters:
+            continue
+
+        semester_result = SemesterResult.objects.filter(
+            student=student,
+            examination=publication.examination,
+            semester=semester,
         ).first()
 
-        if publication:
+        if semester_result is None:
+            continue
 
-            published_results.append(
-                {
-                    "semester_result": result,
-                    "publication": publication,
-                }
-            )
+        published_semesters.add(semester)
+
+        published_results.append(
+            {
+                "semester_result": semester_result,
+                "publication": publication,
+            }
+        )
 
     latest_examination = None
 
     if published_results:
 
-        latest_examination = published_results[-1]["semester_result"].examination
+        latest_examination = (
+            published_results[-1]["semester_result"].examination
+        )
 
     return render(
         request,
@@ -2071,14 +3244,53 @@ def combined_grade_sheet_list(request):
             .first()
         )
 
-        if latest_result:
+        if not latest_result:
+            continue
 
-            student_results.append(
-                {
-                    "student": student,
-                    "combined_result": latest_result,
-                }
+        # Calculate CGPA from the effective/latest
+        # attempt for every subject.
+        effective_results = get_effective_results(
+            student=student
+        )
+
+        registered_credits = Decimal("0")
+        weighted_grade_points = Decimal("0")
+        result_status = "PASS"
+
+        for result in effective_results:
+
+            credits = result.subject.credits
+
+            registered_credits += credits
+
+            weighted_grade_points += (
+                credits * result.grade_point
             )
+
+            if result.result_status == "FAIL":
+                result_status = "FAIL"
+
+        if registered_credits > 0:
+
+            displayed_cgpa = (
+                weighted_grade_points
+                / registered_credits
+            ).quantize(
+                Decimal("0.01")
+            )
+
+        else:
+
+            displayed_cgpa = Decimal("0.00")
+
+        student_results.append(
+            {
+                "student": student,
+                "combined_result": latest_result,
+                "displayed_cgpa": displayed_cgpa,
+                "displayed_result_status": result_status,
+            }
+        )
 
     return render(
         request,
@@ -2099,10 +3311,34 @@ def student_semester_grade_sheet(
         user=request.user
     )
 
+    publication = (
+        ResultPublication.objects.filter(
+            examination__semester_results__student=student,
+            semester=semester,
+            is_published=True,
+        )
+        .order_by(
+            "-published_on",
+            "-id",
+        )
+        .first()
+    )
+
+    if publication is None:
+
+        messages.error(
+            request,
+            "Semester Grade Sheet is not available."
+        )
+
+        return redirect(
+            "student_results"
+        )
+
     return semester_grade_sheet(
         request,
         student.id,
-        examination_id,
+        publication.examination.id,
         semester,
     )
 
@@ -2113,11 +3349,34 @@ def student_combined_grade_sheet(request):
         user=request.user
     )
 
+    latest_publication = (
+        ResultPublication.objects.filter(
+            examination__combined_results__student=student,
+            is_published=True,
+        )
+        .order_by(
+            "-published_on",
+            "-id",
+        )
+        .first()
+    )
+
+    if latest_publication is None:
+
+        messages.error(
+            request,
+            "Combined Grade Sheet is not available."
+        )
+
+        return redirect(
+            "student_results"
+        )
+
     latest_result = (
         CombinedResult.objects.filter(
             student=student,
+            examination=latest_publication.examination,
         )
-        .order_by("-examination__id")
         .first()
     )
 

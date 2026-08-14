@@ -2,9 +2,15 @@ from admissions.models import Student
 from examinations.models import Examination
 from django.conf import settings
 from django.db import models
-from registration.models import ExaminationRegistration
+from registration.models import (
+    ExaminationRegistration,
+    BacklogRegistrationSubject,
+)
 from academics.models import Subject
-from evaluation.models import FacultySubjectAssignment
+from evaluation.models import (
+    FacultySubjectAssignment,
+    BacklogFacultyAssignment,
+)
 
 WORKFLOW_STATUS_CHOICES = [
     ("DRAFT", "Draft"),
@@ -181,6 +187,139 @@ class ResultEntry(models.Model):
             f"{self.subject.subject_code}"
         )
 
+class BacklogResultEntry(models.Model):
+
+    backlog_registration_subject = models.ForeignKey(
+        BacklogRegistrationSubject,
+        on_delete=models.PROTECT,
+        related_name="result_entries",
+    )
+
+    subject = models.ForeignKey(
+        Subject,
+        on_delete=models.PROTECT,
+    )
+
+    faculty_assignment = models.ForeignKey(
+        BacklogFacultyAssignment,
+        on_delete=models.PROTECT,
+        related_name="result_entries",
+    )
+
+    workflow_status = models.CharField(
+        max_length=15,
+        choices=WORKFLOW_STATUS_CHOICES,
+        default="DRAFT",
+    )
+
+    workflow_remarks = models.TextField(
+        blank=True,
+    )
+
+    submitted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    approved_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    class_test_marks = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+    attendance_assignment_marks = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+    theory_external_marks = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+    practical_internal_marks = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+    practical_external_marks = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+    total_marks = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+    percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+    grade = models.CharField(
+        max_length=2,
+        blank=True,
+    )
+
+    grade_point = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+    )
+
+    result_status = models.CharField(
+        max_length=20,
+        blank=True,
+    )
+
+    created_on = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_on = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+
+        ordering = [
+            "backlog_registration_subject",
+        ]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "backlog_registration_subject",
+                ],
+                name="unique_backlog_result_entry",
+            ),
+        ]
+
+    def __str__(self):
+
+        return (
+            f"{self.backlog_registration_subject} - "
+            f"{self.subject.subject_code}"
+        )
+
 class StudentAcademicResult(models.Model):
 
     student = models.ForeignKey(
@@ -199,6 +338,10 @@ class StudentAcademicResult(models.Model):
         Subject,
         on_delete=models.PROTECT,
         related_name="academic_results",
+    )
+
+    attempt_number = models.PositiveSmallIntegerField(
+        default=0,
     )
 
     # Marks

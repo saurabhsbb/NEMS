@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Backlog Marks Entry</title>
+
+</head>
+
+<body>
+
+<h1>National Examination Management System (NEMS)</h1>
+
+<hr>
+
+<h2>Backlog Marks Entry</h2>
+
+<hr>
+
+{% if messages %}
+
+    {% for message in messages %}
+
+        <p>
+            <strong>{{ message }}</strong>
+        </p>
+
+    {% endfor %}
+
+{% endif %}
+
+<p>
+    <strong>Subject:</strong>
+    {{ assignment.subject.subject_code }}
+    -
+    {{ assignment.subject.subject_name }}
+</p>
+
+<p>
+    <strong>Subject Type:</strong>
+    {{ assignment.subject.get_subject_type_display }}
+</p>
+
+<p>
+    <strong>Faculty:</strong>
+    {{ assignment.faculty }}
+</p>
+
+<hr>
+
+<p>
+
+    <strong>Examination:</strong>
+
+    {{ selected_examination.examination_name }}
+
+</p>
+
+{% if selected_examination %}
+
+<hr>
+
+<h4>
+    Examination:
+    {{ selected_examination.examination_name }}
+</h4>
+
+{% if active_window %}
+
+<p>
+    <strong>Active Assessment:</strong>
+    {{ active_window.get_assessment_type_display }}
+</p>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <table border="1" cellpadding="8">
+
+        <tr>
+
+            <th>Roll No.</th>
+
+            <th>Student</th>
+
+            {% if assignment.subject.subject_type == "THEORY" %}
+
+                <th>
+                    Class Test
+                    <br>
+                    (Max {{ assignment.subject.class_test_max }})
+                </th>
+
+                <th>
+                    Attendance & Assignment
+                    <br>
+                    (Max {{ assignment.subject.attendance_assignment_max }})
+                </th>
+
+                <th>
+                    Theory External
+                    <br>
+                    (Max {{ assignment.subject.theory_external_max }})
+                </th>
+
+            {% elif assignment.subject.subject_type == "PRACTICAL" %}
+
+                <th>
+                    Practical Internal
+                    <br>
+                    (Max {{ assignment.subject.practical_internal_max }})
+                </th>
+
+                <th>
+                    Practical External
+                    <br>
+                    (Max {{ assignment.subject.practical_external_max }})
+                </th>
+
+            {% elif assignment.subject.subject_type == "THEORY_PRACTICAL" %}
+
+                <th>
+                    Class Test
+                    <br>
+                    (Max {{ assignment.subject.class_test_max }})
+                </th>
+
+                <th>
+                    Attendance & Assignment
+                    <br>
+                    (Max {{ assignment.subject.attendance_assignment_max }})
+                </th>
+
+                <th>
+                    Theory External
+                    <br>
+                    (Max {{ assignment.subject.theory_external_max }})
+                </th>
+
+                <th>
+                    Practical Internal
+                    <br>
+                    (Max {{ assignment.subject.practical_internal_max }})
+                </th>
+
+                <th>
+                    Practical External
+                    <br>
+                    (Max {{ assignment.subject.practical_external_max }})
+                </th>
+
+            {% endif %}
+
+            <th>Total</th>
+
+            <th>Percentage</th>
+
+            <th>Grade</th>
+
+            <th>Status</th>
+
+        </tr>
+
+        {% for registration in registrations %}
+
+        <tr>
+
+            <td>
+                {{ registration.backlog_registration.student.roll_number }}
+            </td>
+
+            <td>
+                {{ registration.backlog_registration.student }}
+            </td>
+
+
+            {% if assignment.subject.subject_type == "THEORY" %}
+
+                <td>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="{{ assignment.subject.class_test_max }}"
+                        name="class_test_{{ registration.id }}"
+                        value="{{ registration.class_test_marks }}"
+                        {% if registration.is_locked %}
+                            readonly
+                        {% endif %}
+                    >
+
+                </td>
+
+                <td>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="{{ assignment.subject.attendance_assignment_max }}"
+                        name="attendance_assignment_{{ registration.id }}"
+                        value="{{ registration.attendance_assignment_marks }}"
+                        {% if registration.is_locked %}
+                            readonly
+                        {% endif %}
+                    >
+
+                </td>
+
+                <td>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="{{ assignment.subject.theory_external_max }}"
+                        name="theory_external_{{ registration.id }}"
+                        value="{{ registration.theory_external_marks }}"
+                        {% if registration.is_locked %}
+                            readonly
+                        {% endif %}
+                    >
+
+                </td>
+
+
+            {% elif assignment.subject.subject_type == "PRACTICAL" %}
+
+                <td>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="{{ assignment.subject.practical_internal_max }}"
+                        name="practical_internal_{{ registration.id }}"
+                        value="{{ registration.practical_internal_marks }}"
+                        {% if registration.is_locked %}
+                            readonly
+                        {% endif %}
+                    >
+
+                </td>
+
+                <td>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="{{ assignment.subject.practical_external_max }}"
+                        name="practical_external_{{ registration.id }}"
+                        value="{{ registration.practical_external_marks }}"
+                        {% if registration.is_locked %}
+                            readonly
+                        {% endif %}
+                    >
+
+                </td>
+
+
+            {% elif assignment.subject.subject_type == "THEORY_PRACTICAL" %}
+
+                <td>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="{{ assignment.subject.class_test_max }}"
+                        name="class_test_{{ registration.id }}"
+                        value="{{ registration.class_test_marks }}"
+                        {% if registration.is_locked %}
+                            readonly
+                        {% endif %}
+                    >
+
+                </td>
+
+                <td>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="{{ assignment.subject.attendance_assignment_max }}"
+                        name="attendance_assignment_{{ registration.id }}"
+                        value="{{ registration.attendance_assignment_marks }}"
+                        {% if registration.is_locked %}
+                            readonly
+                        {% endif %}
+                    >
+
+                </td>
+
+                <td>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="{{ assignment.subject.theory_external_max }}"
+                        name="theory_external_{{ registration.id }}"
+                        value="{{ registration.theory_external_marks }}"
+                        {% if registration.is_locked %}
+                            readonly
+                        {% endif %}
+                    >
+
+                </td>
+
+                <td>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="{{ assignment.subject.practical_internal_max }}"
+                        name="practical_internal_{{ registration.id }}"
+                        value="{{ registration.practical_internal_marks }}"
+                        {% if registration.is_locked %}
+                            readonly
+                        {% endif %}
+                    >
+
+                </td>
+
+                <td>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="{{ assignment.subject.practical_external_max }}"
+                        name="practical_external_{{ registration.id }}"
+                        value="{{ registration.practical_external_marks }}"
+                        {% if registration.is_locked %}
+                            readonly
+                        {% endif %}
+                    >
+
+                </td>
+
+            {% endif %}
+
+
+            <td>
+                {{ registration.total_marks }}
+            </td>
+
+            <td>
+                {{ registration.percentage }}
+            </td>
+
+            <td>
+                {{ registration.grade }}
+            </td>
+
+            <td>
+
+                {% if registration.result_entry %}
+
+                    {% if registration.result_entry.workflow_status == "DRAFT" %}
+                        Draft
+
+                    {% elif registration.result_entry.workflow_status == "RETURNED" %}
+                        Returned
+
+                    {% elif registration.result_entry.workflow_status == "SUBMITTED" %}
+                        Submitted
+
+                    {% elif registration.result_entry.workflow_status == "APPROVED" %}
+                        Approved
+
+                    {% endif %}
+
+                {% else %}
+
+                    Draft
+
+                {% endif %}
+
+            </td>
+
+        </tr>
+
+        {% empty %}
+
+        <tr>
+
+            <td colspan="10">
+
+                No approved backlog students found for this subject.
+
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    </table>
+
+    <br>
+
+    {% if registrations %}
+
+        <button
+            type="submit"
+            name="action"
+            value="save"
+        >
+            Save Marks
+        </button>
+
+        &nbsp;
+
+        <button
+            type="submit"
+            name="action"
+            value="submit"
+        >
+            Submit Marks
+        </button>
+
+    {% endif %}
+
+</form>
+
+{% else %}
+
+<p>
+    <strong>
+        No active assessment window is available for this examination.
+    </strong>
+</p>
+
+{% endif %}
+
+{% endif %}
+
+<hr>
+
+<a href="{% url 'faculty_dashboard' %}">
+    Back to Faculty Dashboard
+</a>
+

@@ -59,6 +59,46 @@ Welcome <strong>{{ request.user.first_name }}</strong>
 
 <hr>
 
+<h3>Backlog Subjects</h3>
+
+<ul>
+
+    {% for assignment in backlog_assignments %}
+
+        <li>
+
+            <strong>
+                {{ assignment.examination.examination_name }}
+            </strong>
+
+            -
+
+            {{ assignment.subject.subject_code }}
+            -
+            {{ assignment.subject.subject_name }}
+
+            &nbsp; | &nbsp;
+
+            <a href="/faculty/backlog-enter-marks/{{ assignment.id }}/">
+
+                Enter Backlog Marks
+
+            </a>
+
+        </li>
+
+    {% empty %}
+
+        <li>
+            No backlog subjects assigned.
+        </li>
+
+    {% endfor %}
+
+</ul>
+
+<hr>
+
 <h3>My Backlog Subjects</h3>
 
 <ul>

@@ -46,10 +46,23 @@ Faculty Submission Verification
             <td>{{ assignment.status }}</td>
 
             <td>
-                <a href="{% url 'coe_verify_submission' assignment.faculty_assignment_id assignment.examination_id %}"
-                   class="btn btn-primary btn-sm">
-                    Verify
-                </a>
+
+                {% if assignment.submission_type == "REGULAR" %}
+
+                    <a href="{% url 'coe_verify_submission' assignment.faculty_assignment_id assignment.examination_id %}"
+                       class="btn btn-primary btn-sm">
+                        Verify
+                    </a>
+
+                {% elif assignment.submission_type == "BACKLOG" %}
+
+                    <a href="{% url 'coe_verify_backlog_submission' assignment.faculty_assignment_id assignment.examination_id %}"
+                       class="btn btn-warning btn-sm">
+                        Verify Backlog
+                    </a>
+
+                {% endif %}
+
             </td>
 
         </tr>

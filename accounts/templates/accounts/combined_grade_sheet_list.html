@@ -34,17 +34,15 @@
 
             <td>{{ item.student.student_name }}</td>
 
-            <td>{{ item.combined_result.cgpa }}</td>
+            <td>{{ item.displayed_cgpa }}</td>
 
-            <td>{{ item.combined_result.result_status }}</td>
+            <td>{{ item.displayed_result_status }}</td>
 
             <td>
 
                 <a class="btn btn-primary btn-sm"
-                   href="{% url 'combined_grade_sheet' item.student.id item.combined_result.examination.id %}"
-
+                   href="{% url 'combined_grade_sheet' item.student.id item.combined_result.examination.id %}">
                     View Combined Grade Sheet
-
                 </a>
 
             </td>
