@@ -1,3 +1,4 @@
+from django.db.models import Q
 from examinations.models import (
     Examination,
     ExaminationSemester,
@@ -5,12 +6,16 @@ from examinations.models import (
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from admissions.models import Student
+from academics.models import (
+    Subject,
+    ElectiveGroup,
+)
 from academics.models import Subject
 from .models import (
     SemesterRegistration,
     SemesterRegistrationWindow,
     ExaminationRegistration,
+    StudentElectiveSelection,
 )
 
 from .services import (
@@ -20,7 +25,7 @@ from .services import (
     approve_exam_registration,
     reject_exam_registration,
 )
-
+from admissions.models import Student
 
 @login_required
 def semester_registration(request):
@@ -84,7 +89,9 @@ def review_registration(request):
     if request.method != "POST":
         return redirect("semester_registration")
 
-    semester = request.POST.get("semester")
+    semester = int(
+        request.POST.get("semester")
+    )
 
     student = Student.objects.get(
         user=request.user
@@ -97,6 +104,41 @@ def review_registration(request):
         ).first()
     )
 
+    if registration_window is None:
+        messages.error(
+            request,
+            "No registration window is currently open."
+        )
+
+        return redirect("semester_registration")
+
+    from academics.models import Curriculum
+
+    curriculum = Curriculum.objects.get(
+        programme=student.programme,
+        is_active=True,
+    )
+
+    elective_groups = (
+        ElectiveGroup.objects.filter(
+            curriculum=curriculum,
+            semester=semester,
+            is_active=True,
+        )
+        .prefetch_related("subject_set")
+        .order_by("id")
+    )
+
+    for group in elective_groups:
+
+        group.available_subjects = (
+            group.subject_set.filter(
+                is_active=True,
+                is_elective=True,
+            )
+            .order_by("display_order")
+        )
+
     return render(
         request,
         "accounts/review_registration.html",
@@ -104,9 +146,9 @@ def review_registration(request):
             "student": student,
             "semester": semester,
             "registration_window": registration_window,
+            "elective_groups": elective_groups,
         },
     )
-
 
 @login_required
 def submit_registration(request):
@@ -122,10 +164,38 @@ def submit_registration(request):
         request.POST.get("semester")
     )
 
-    register_student(
-        student,
-        semester,
-    )
+    elective_selections = {}
+
+    for key, value in request.POST.items():
+
+        if key.startswith("elective_group_"):
+
+            group_id = int(
+                key.replace("elective_group_", "")
+            )
+
+            subject_id = int(value)
+
+            elective_selections[group_id] = subject_id
+
+    try:
+
+        register_student(
+            student,
+            semester,
+            elective_selections=elective_selections,
+        )
+
+    except ValueError as e:
+
+        messages.error(
+            request,
+            str(e)
+        )
+
+        return redirect(
+            "semester_registration"
+        )
 
     return render(
         request,
@@ -270,10 +340,26 @@ def examination_registration(request):
 
     if eligible:
 
+        selected_elective_subject_ids = (
+            StudentElectiveSelection.objects.filter(
+                semester_registration=semester_registration,
+            ).values_list(
+                "subject_id",
+                flat=True,
+            )
+        )
+
         subjects = Subject.objects.filter(
             curriculum=semester_registration.curriculum,
             semester=semester_registration.semester,
             is_active=True,
+        ).filter(
+            Q(is_elective=False)
+            |
+            Q(
+                is_elective=True,
+                id__in=selected_elective_subject_ids,
+            )
         ).order_by(
             "display_order"
         )

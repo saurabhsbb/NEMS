@@ -27,6 +27,11 @@ urlpatterns = [
         "examinations/",
         include("examinations.urls"),
     ),
+
+    path(
+        "hallticket/",
+        include("hallticket.urls"),
+    ),
 ]
 
 if settings.DEBUG:

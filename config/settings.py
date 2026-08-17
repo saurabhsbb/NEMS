@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "verification",
     "registration",
     "evaluation",
+    "hallticket",
 ]
 
 MIDDLEWARE = [

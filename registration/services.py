@@ -1,17 +1,34 @@
 from django.utils import timezone
-from academics.models import Curriculum
+from django.db import transaction
+from academics.models import (
+    Curriculum,
+    ElectiveGroup,
+    Subject,
+)
 from .models import (
     SemesterRegistration,
     SemesterRegistrationWindow,
+    StudentElectiveSelection,
 )
 
-
+@transaction.atomic
 def register_student(
     student,
     semester,
+    elective_selections=None,
 ):
     """
-    Register a student for a semester.
+    Register a student for a semester and save
+    the student's elective selections.
+
+    elective_selections must be a dictionary:
+
+        {
+            elective_group_id: subject_id,
+        }
+
+    For semesters without elective groups, the dictionary
+    may be empty or None.
     """
 
     if student.admission_status != "CONFIRMED":
@@ -40,6 +57,66 @@ def register_student(
         is_active=True,
     )
 
+    elective_selections = elective_selections or {}
+
+    elective_groups = list(
+        ElectiveGroup.objects.filter(
+            curriculum=curriculum,
+            semester=semester,
+            is_active=True,
+        )
+    )
+
+    expected_group_ids = {
+        group.id
+        for group in elective_groups
+    }
+
+    submitted_group_ids = {
+        int(group_id)
+        for group_id in elective_selections.keys()
+    }
+
+    if submitted_group_ids != expected_group_ids:
+
+        raise ValueError(
+            "Please select a subject for every required elective group."
+        )
+
+    validated_selections = []
+
+    for group in elective_groups:
+
+        subject_id = elective_selections.get(
+            group.id
+        )
+
+        if subject_id is None:
+            raise ValueError(
+                f"Please select a subject for {group.group_name}."
+            )
+
+        subject = Subject.objects.filter(
+            id=subject_id,
+            curriculum=curriculum,
+            semester=semester,
+            elective_group=group,
+            is_elective=True,
+            is_active=True,
+        ).first()
+
+        if subject is None:
+            raise ValueError(
+                "Invalid elective subject selected."
+            )
+
+        validated_selections.append(
+            (
+                group,
+                subject,
+            )
+        )
+
     registration = SemesterRegistration.objects.create(
         student=student,
         semester=semester,
@@ -48,6 +125,14 @@ def register_student(
         registration_date=timezone.now(),
         registration_status="SUBMITTED",
     )
+
+    for group, subject in validated_selections:
+
+        StudentElectiveSelection.objects.create(
+            semester_registration=registration,
+            elective_group=group,
+            subject=subject,
+        )
 
     return registration
 

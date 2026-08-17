@@ -1,0 +1,180 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block page_content %}
+
+<h2>Hall Ticket Schedule</h2>
+
+<h4>
+    {{ examination.examination_code }}
+    -
+    {{ examination.examination_name }}
+</h4>
+
+<hr>
+
+<h5>Subjects Registered for this Examination</h5>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <table class="table table-bordered table-striped">
+
+        <thead>
+            <tr>
+                <th>Sr. No.</th>
+                <th>Subject Code</th>
+                <th>Subject Name</th>
+                <th>Semester</th>
+                <th>Exam Date</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for subject in subjects %}
+
+            
+
+            <tr>
+
+                <td>
+                    {{ forloop.counter }}
+                </td>
+
+                <td>
+                    {{ subject.subject_code }}
+                </td>
+
+                <td>
+                    {{ subject.subject_name }}
+                </td>
+
+                <td>
+                    {{ subject.semester }}
+                </td>
+
+                <td>
+                    <input
+                        type="date"
+                        name="exam_date_{{ subject.id }}"
+                        value="{{ subject.schedule.exam_date|date:'Y-m-d' }}"
+                        class="form-control"
+                    >
+                </td>
+
+                <td>
+                    <input
+                        type="time"
+                        name="start_time_{{ subject.id }}"
+                        value="{{ subject.schedule.start_time|time:'H:i' }}"
+                        class="form-control"
+                    >
+                </td>
+
+                <td>
+                    <input
+                        type="time"
+                        name="end_time_{{ subject.id }}"
+                        value="{{ subject.schedule.end_time|time:'H:i' }}"
+                        class="form-control"
+                    >
+                </td>
+
+            </tr>
+
+            
+
+            {% empty %}
+
+            <tr>
+                <td colspan="7" class="text-center">
+                    No approved student registrations found for this examination.
+                </td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    {% if subjects %}
+
+    <button
+        type="submit"
+        class="btn btn-success"
+    >
+        Save Schedule
+    </button>
+
+    {% endif %}
+
+</form>
+
+<hr>
+
+<h4>Hall Ticket Publication</h4>
+
+{% if publication and publication.is_published %}
+
+<div class="alert alert-success">
+
+    <strong>Hall Tickets Published</strong>
+
+    <br>
+
+    Published on:
+    {{ publication.published_on }}
+
+    <br>
+
+    Published by:
+    {{ publication.published_by }}
+
+</div>
+
+<div class="alert alert-warning">
+
+    Hall Tickets have been published.
+    The examination schedule can no longer be modified.
+
+</div>
+
+{% else %}
+
+<div class="alert alert-info">
+
+    Hall Tickets are not yet published.
+
+    <br>
+
+    All subjects must have a valid examination schedule
+    before publication.
+
+</div>
+
+<form
+    method="post"
+    action="{% url 'hall_ticket_publish' examination.id %}"
+    onsubmit="return confirm(
+        'Are you sure you want to publish Hall Tickets for this examination? Once published, the examination schedule cannot be modified.'
+    );"
+>
+
+    {% csrf_token %}
+
+    <button
+        type="submit"
+        class="btn btn-primary"
+    >
+        Publish Hall Tickets
+    </button>
+
+</form>
+
+{% endif %}
+
+{% endblock %}

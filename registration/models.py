@@ -153,6 +153,41 @@ EXAMINATION_REGISTRATION_STATUS = [
     ("CANCELLED", "Cancelled"),
 ]
 
+class StudentElectiveSelection(models.Model):
+
+    semester_registration = models.ForeignKey(
+        SemesterRegistration,
+        on_delete=models.CASCADE,
+        related_name="elective_selections",
+    )
+
+    elective_group = models.ForeignKey(
+        "academics.ElectiveGroup",
+        on_delete=models.PROTECT,
+    )
+
+    subject = models.ForeignKey(
+        Subject,
+        on_delete=models.PROTECT,
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "semester_registration",
+                    "elective_group",
+                ],
+                name="unique_student_elective_group",
+            ),
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.semester_registration.student.roll_number} - "
+            f"{self.elective_group.group_code} - "
+            f"{self.subject.subject_code}"
+        )
 
 class ExaminationRegistration(models.Model):
 

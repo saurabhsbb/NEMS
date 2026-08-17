@@ -1,0 +1,70 @@
+{% extends "accounts/coe_base.html" %}
+
+{% block page_content %}
+
+<h2>Hall Ticket</h2>
+
+<p>
+    Select an examination to prepare the Hall Ticket schedule.
+</p>
+
+<table class="table table-bordered">
+
+    <thead>
+        <tr>
+            <th>Examination Code</th>
+            <th>Examination Name</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        {% for examination in examinations %}
+
+        <tr>
+
+            <td>
+                {{ examination.examination_code }}
+            </td>
+
+            <td>
+                {{ examination.examination_name }}
+            </td>
+
+            <td>
+                {{ examination.examination_type.name }}
+            </td>
+
+            <td>
+                {{ examination.get_status_display }}
+            </td>
+
+            <td>
+                <a
+                    href="{% url 'hall_ticket_schedule' examination.id %}"
+                    class="btn btn-primary btn-sm"
+                >
+                    Select
+                </a>
+            </td>
+
+        </tr>
+
+        {% empty %}
+
+        <tr>
+            <td colspan="5">
+                No examinations available.
+            </td>
+        </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% endblock %}

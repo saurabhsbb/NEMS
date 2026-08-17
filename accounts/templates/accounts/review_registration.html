@@ -68,10 +68,60 @@ Semester {{ semester }}
         value="{{ semester }}"
     >
 
+    {% if elective_groups %}
+
+        <h3>Elective Selection</h3>
+
+        <p>
+            Please select the required subject from each elective group.
+        </p>
+
+        {% for group in elective_groups %}
+
+            <div
+                style="
+                    margin-bottom:20px;
+                    padding:15px;
+                    border:1px solid #ccc;
+                    background:#f8f9fa;
+                "
+            >
+
+                <h4>
+                    {{ group.group_name }}
+                </h4>
+
+                <p>
+                    Select {{ group.subjects_to_choose }} subject(s):
+                </p>
+
+                {% for subject in group.available_subjects %}
+
+                    <div style="margin-bottom:8px;">
+
+                        <input
+                            type="radio"
+                            name="elective_group_{{ group.id }}"
+                            value="{{ subject.id }}"
+                            required
+                        >
+
+                        {{ subject.subject_code }}
+                        -
+                        {{ subject.subject_name }}
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
     <button type="submit">
-
         Submit Registration
-
     </button>
 
 </form>
