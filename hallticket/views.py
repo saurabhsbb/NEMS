@@ -1,5 +1,5 @@
 from datetime import date, time
-
+from admissions.models import Student
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
@@ -7,8 +7,11 @@ from django.db import transaction
 
 from academics.models import Subject
 from examinations.models import Examination
-from registration.models import ExaminationRegistration
-
+from registration.models import (
+    ExaminationRegistration,
+    BacklogRegistration,
+    BacklogRegistrationSubject,
+)
 from .models import (
     ExaminationSubjectSchedule,
     HallTicketPublication,
@@ -34,6 +37,207 @@ def hall_ticket_examinations(request):
         },
     )
 
+@login_required
+def student_hall_tickets(request):
+
+    student = get_object_or_404(
+        Student,
+        user=request.user,
+    )
+
+    regular_examination_ids = ExaminationRegistration.objects.filter(
+        student=student,
+        registration_status="APPROVED",
+        examination__examination_type__code="REG",
+    ).values_list(
+        "examination_id",
+        flat=True,
+    )
+
+    backlog_examination_ids = BacklogRegistration.objects.filter(
+        student=student,
+        registration_status="APPROVED",
+        examination__examination_type__code="BLG",
+    ).values_list(
+        "examination_id",
+        flat=True,
+    )
+
+    examination_ids = set(
+        regular_examination_ids
+    ) | set(
+        backlog_examination_ids
+    )
+
+    examinations = Examination.objects.filter(
+        id__in=examination_ids,
+        is_active=True,
+        hall_ticket_publication__is_published=True,
+    ).select_related(
+        "examination_type",
+    ).order_by(
+        "-academic_year",
+        "-id",
+    )
+
+    return render(
+        request,
+        "hallticket/student_hall_tickets.html",
+        {
+            "student": student,
+            "examinations": examinations,
+        },
+    )
+
+@login_required
+def student_hall_ticket(request, examination_id):
+
+    student = get_object_or_404(
+        Student,
+        user=request.user,
+    )
+
+    examination = get_object_or_404(
+        Examination,
+        pk=examination_id,
+        examination_type__code__in=["REG", "BLG"],
+        is_active=True,
+    )
+
+    publication = HallTicketPublication.objects.filter(
+        examination=examination,
+        is_published=True,
+    ).first()
+
+    if not publication:
+
+        messages.error(
+            request,
+            "Hall Ticket is not available for this examination.",
+        )
+
+        return redirect(
+            "student_hall_tickets",
+        )
+
+    subjects = Subject.objects.none()
+
+    if examination.examination_type.code == "REG":
+
+        registration = ExaminationRegistration.objects.filter(
+            examination=examination,
+            student=student,
+            registration_status="APPROVED",
+        ).select_related(
+            "semester_registration",
+        ).first()
+
+        if not registration:
+
+            messages.error(
+                request,
+                "You are not registered for this examination.",
+            )
+
+            return redirect(
+                "student_hall_tickets",
+            )
+
+        semester_registration = (
+            registration.semester_registration
+        )
+
+        regular_subjects = Subject.objects.filter(
+            curriculum=semester_registration.curriculum,
+            semester=semester_registration.semester,
+            is_active=True,
+            is_elective=False,
+        )
+
+        elective_subjects = Subject.objects.filter(
+            id__in=semester_registration.elective_selections.values_list(
+                "subject_id",
+                flat=True,
+            ),
+            is_active=True,
+        )
+
+        subjects = (
+            regular_subjects | elective_subjects
+        ).distinct()
+
+    elif examination.examination_type.code == "BLG":
+
+        backlog_registration = BacklogRegistration.objects.filter(
+            examination=examination,
+            student=student,
+            registration_status="APPROVED",
+        ).first()
+
+        if not backlog_registration:
+
+            messages.error(
+                request,
+                "You are not registered for this backlog examination.",
+            )
+
+            return redirect(
+                "student_hall_tickets",
+            )
+
+        subjects = Subject.objects.filter(
+            backlogregistrationsubject__backlog_registration=backlog_registration,
+            is_active=True,
+        ).distinct()
+
+    subjects = subjects.order_by(
+        "semester",
+        "display_order",
+    )
+
+    schedules = ExaminationSubjectSchedule.objects.filter(
+        examination=examination,
+        subject__in=subjects,
+    ).select_related(
+        "subject",
+    )
+
+    schedule_map = {
+        schedule.subject_id: schedule
+        for schedule in schedules
+    }
+
+    # Every subject must have a published examination schedule.
+    missing_subjects = [
+        subject
+        for subject in subjects
+        if subject.id not in schedule_map
+    ]
+
+    if missing_subjects:
+
+        messages.error(
+            request,
+            "The Hall Ticket cannot be generated because "
+            "the examination schedule is incomplete.",
+        )
+
+        return redirect(
+            "student_hall_tickets",
+        )
+
+    return render(
+        request,
+        "hallticket/student_hall_ticket.html",
+        {
+            "student": student,
+            "examination": examination,
+            "publication": publication,
+            "subjects": subjects,
+            "schedules": schedules,
+            "schedule_map": schedule_map,
+        },
+    )
 
 @login_required
 def hall_ticket_schedule(request, examination_id):

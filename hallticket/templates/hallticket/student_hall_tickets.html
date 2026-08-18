@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <title>Hall Tickets - NEMS</title>
+
+</head>
+
+<body>
+
+    <h1>
+        National Examination Management System (NEMS)
+    </h1>
+
+    <hr>
+
+    <h2>
+        Hall Tickets
+    </h2>
+
+    <p>
+        Welcome
+        <strong>{{ request.user.first_name }}</strong>
+    </p>
+
+    <hr>
+
+    <h3>
+        Available Hall Tickets
+    </h3>
+
+    <table
+        border="1"
+        cellpadding="8"
+        cellspacing="0"
+    >
+
+        <thead>
+
+            <tr>
+
+                <th>
+                    Examination
+                </th>
+
+                <th>
+                    Examination Type
+                </th>
+
+                <th>
+                    Action
+                </th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            {% for examination in examinations %}
+
+            <tr>
+
+                <td>
+                    {{ examination.examination_code }}
+                </td>
+
+                <td>
+                    {{ examination.examination_type.name }}
+                </td>
+
+                <td>
+
+                    <a
+                        href="{% url 'student_hall_ticket' examination.id %}"
+                    >
+                        View / Print Hall Ticket
+                    </a>
+
+                </td>
+
+            </tr>
+
+            {% empty %}
+
+            <tr>
+
+                <td
+                    colspan="3"
+                >
+                    No Hall Tickets are currently available.
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    <hr>
+
+    <p>
+        <a href="/student/">
+            Back to Student Dashboard
+        </a>
+    </p>
+
+</body>
+
+</html>

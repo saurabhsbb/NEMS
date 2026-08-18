@@ -23,4 +23,15 @@ urlpatterns = [
         name="hall_ticket_publish",
     ),
 
+    path(
+        "student/",
+        views.student_hall_tickets,
+        name="student_hall_tickets",
+    ),
+
+    path(
+        "student/<int:examination_id>/",
+        views.student_hall_ticket,
+        name="student_hall_ticket",
+    ),
 ]
