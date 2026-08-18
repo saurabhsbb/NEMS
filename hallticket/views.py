@@ -45,6 +45,24 @@ def hall_ticket_schedule(request, examination_id):
         is_active=True,
     )
 
+    publication = HallTicketPublication.objects.filter(
+        examination=examination,
+    ).first()
+
+    # Once Hall Tickets are published, the schedule is locked.
+    if request.method == "POST" and publication and publication.is_published:
+
+        messages.error(
+            request,
+            "Hall Tickets have already been published. "
+            "The examination schedule cannot be modified.",
+        )
+
+        return redirect(
+            "hall_ticket_schedule",
+            examination_id=examination.id,
+        )
+
     subjects = Subject.objects.none()
 
     # ---------------------------------------------------------
@@ -364,6 +382,23 @@ def hall_ticket_schedule(request, examination_id):
         examination=examination,
     ).first()
 
+    if (
+        request.method == "POST"
+        and publication
+        and publication.is_published
+    ):
+
+        messages.error(
+            request,
+            "Hall Tickets have already been published. "
+            "The examination schedule cannot be modified.",
+        )
+
+        return redirect(
+            "hall_ticket_schedule",
+            examination_id=examination.id,
+        )
+
     return render(
         request,
         "hallticket/coe_schedule.html",
@@ -371,6 +406,7 @@ def hall_ticket_schedule(request, examination_id):
             "examination": examination,
             "subjects": subjects,
             "schedule_map": schedule_map,
+            "publication": publication,
         },
     )
 
@@ -378,24 +414,10 @@ def hall_ticket_schedule(request, examination_id):
 def hall_ticket_publish(request, examination_id):
 
     if request.method != "POST":
-
-        publication = HallTicketPublication.objects.filter(
-            examination=examination,
-            is_published=True,
-        ).first()
-
-        if publication:
-
-            messages.error(
-                request,
-                "Hall Tickets have already been published. "
-                "The examination schedule cannot be modified.",
-            )
-
-            return redirect(
-                "hall_ticket_schedule",
-                examination_id=examination.id,
-            )
+        return redirect(
+            "hall_ticket_schedule",
+            examination_id=examination_id,
+        )
 
     examination = get_object_or_404(
         Examination,
@@ -405,7 +427,7 @@ def hall_ticket_publish(request, examination_id):
     )
 
     # ---------------------------------------------------------
-    # Examination registration must be closed
+    # Registration must be closed
     # ---------------------------------------------------------
 
     if examination.status != "REGISTRATION_CLOSED":
@@ -414,6 +436,27 @@ def hall_ticket_publish(request, examination_id):
             request,
             "Hall Tickets can be published only after "
             "examination registration is closed.",
+        )
+
+        return redirect(
+            "hall_ticket_schedule",
+            examination_id=examination.id,
+        )
+
+    # ---------------------------------------------------------
+    # Prevent re-publication
+    # ---------------------------------------------------------
+
+    publication = HallTicketPublication.objects.filter(
+        examination=examination,
+    ).first()
+
+    if publication and publication.is_published:
+
+        messages.warning(
+            request,
+            "Hall Tickets for this examination "
+            "have already been published.",
         )
 
         return redirect(
@@ -503,18 +546,26 @@ def hall_ticket_publish(request, examination_id):
         )
 
     # ---------------------------------------------------------
-    # Every applicable subject must be scheduled
+    # Get SAVED schedules from database
     # ---------------------------------------------------------
 
-    scheduled_subject_ids = set(
+    schedules = list(
         ExaminationSubjectSchedule.objects.filter(
             examination=examination,
             subject_id__in=subject_ids,
-        ).values_list(
-            "subject_id",
-            flat=True,
+        ).select_related(
+            "subject",
         )
     )
+
+    scheduled_subject_ids = {
+        schedule.subject_id
+        for schedule in schedules
+    }
+
+    # ---------------------------------------------------------
+    # Every subject must have a saved schedule
+    # ---------------------------------------------------------
 
     missing_subject_ids = (
         subject_ids - scheduled_subject_ids
@@ -550,21 +601,96 @@ def hall_ticket_publish(request, examination_id):
         )
 
     # ---------------------------------------------------------
-    # Prevent re-publication
+    # Validate SAVED schedules
     # ---------------------------------------------------------
 
-    publication = (
-        HallTicketPublication.objects.filter(
-            examination=examination,
-        ).first()
+    errors = []
+
+    for schedule in schedules:
+
+        if not schedule.exam_date:
+            errors.append(
+                f"{schedule.subject.subject_code} - "
+                f"{schedule.subject.subject_name}: "
+                f"Exam date is missing."
+            )
+
+        if not schedule.start_time:
+            errors.append(
+                f"{schedule.subject.subject_code} - "
+                f"{schedule.subject.subject_name}: "
+                f"Start time is missing."
+            )
+
+        if not schedule.end_time:
+            errors.append(
+                f"{schedule.subject.subject_code} - "
+                f"{schedule.subject.subject_name}: "
+                f"End time is missing."
+            )
+
+        if (
+            schedule.start_time
+            and schedule.end_time
+            and schedule.end_time <= schedule.start_time
+        ):
+            errors.append(
+                f"{schedule.subject.subject_code} - "
+                f"{schedule.subject.subject_name}: "
+                f"End time must be later than start time."
+            )
+
+    # ---------------------------------------------------------
+    # Check overlapping SAVED schedules
+    # ---------------------------------------------------------
+
+    schedules.sort(
+        key=lambda schedule: (
+            schedule.exam_date,
+            schedule.start_time,
+        )
     )
 
-    if publication and publication.is_published:
+    for index in range(len(schedules)):
 
-        messages.warning(
+        current = schedules[index]
+
+        for previous in schedules[:index]:
+
+            if previous.exam_date != current.exam_date:
+                continue
+
+            if (
+                current.start_time < previous.end_time
+                and current.end_time > previous.start_time
+            ):
+
+                errors.append(
+                    "Schedule conflict: "
+                    f"{previous.subject.subject_code} "
+                    f"({previous.subject.subject_name}) "
+                    "overlaps with "
+                    f"{current.subject.subject_code} "
+                    f"({current.subject.subject_name}) "
+                    f"on {current.exam_date}."
+                )
+
+    # ---------------------------------------------------------
+    # Do not publish if saved schedule is invalid
+    # ---------------------------------------------------------
+
+    if errors:
+
+        for error in errors:
+            messages.error(
+                request,
+                error,
+            )
+
+        messages.error(
             request,
-            "Hall Tickets for this examination "
-            "have already been published.",
+            "Hall Tickets cannot be published because "
+            "the saved examination schedule is invalid.",
         )
 
         return redirect(
