@@ -129,29 +129,15 @@ Welcome <strong>{{ request.user.first_name }}</strong>
 
     {% endfor %}
 
-</ul>
 
-<hr>
 
-<h3>Faculty Services</h3>
+    
+<li>
+    <a href="{% url 'logout' %}">
+        Logout
+    </a>
+</li>
 
-</ul>
-
-<hr>
-
-<h3>Faculty Services</h3>
-
-<ul>
-
-    <li>Upload Question Papers</li>
-
-    <li>Enter Internal Marks</li>
-
-    <li>Enter End Semester Marks</li>
-
-    <li>Logout</li>
-
-</ul>
 
 </body>
 
